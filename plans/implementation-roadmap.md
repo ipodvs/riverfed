@@ -168,13 +168,6 @@ Shared `output/` substrate, cross-model wikilinks, meta-index. Don't design
 this before A2 ships; the strategy doc's open questions get answered by
 real usage.
 
-The first evidence-led interop edge now exists: the local Riverfed server can
-publish any selected vault as a strict `enge.knowledge-pack` v1 for the private
-ENGE.WRITER workspace. Discovery and publishing stay loopback-only, snapshots
-are bounded and deterministic, and Writer must explicitly import or refresh
-them. This does **not** ship the broader shared-output substrate, cross-model
-wikilinks, or meta-index; those remain on demand.
-
 ### A5. Model-adaptive /wiki page — ✅ shipped 2026-06-11
 
 Surfaced by the first non-karpathy vaults: the `/wiki` MAP view's list

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Publish a Riverfed vault as an ENGE Knowledge Pack v1.
+"""Publish a Riverfed vault as a knowledge pack (v1) for the Writer bridge.
 
-This is the narrow, read-only bridge used by ENGE.WRITER.  It turns the
+This is a narrow, read-only bridge.  It turns the
 vault's existing markdown pages and provenance into a bounded JSON snapshot;
 it never changes the vault and never promotes wiki material into canon.
 """

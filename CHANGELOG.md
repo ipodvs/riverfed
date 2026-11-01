@@ -48,10 +48,6 @@ repos you own.
 - **Anki ids are new.** Studio's Anki export derives deck and note-type
   ids from new seeds, so a deck imported before this release is created
   once more instead of updated in place. Delete the old copy in Anki.
-- **Writer bridge origin is configurable.** The `/api/writer/*`
-  knowledge-pack routes still accept loopback origins; a hosted Writer
-  origin must now be listed in `RIVERFED_WRITER_ORIGINS`
-  (comma-separated, env or `.env`).
 - **No API key in `.env.example`.** The pipeline authenticates through
   the agent CLI login. `ANTHROPIC_API_KEY` stays unset; a value would
   override the `claude` login.

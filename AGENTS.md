@@ -116,9 +116,7 @@ Full product description: [`README.md`](README.md).
 │   │                           display_path), migrate_vaults.py (the one-shot
 │   │                           C1 mover), model_registry.py (manifest parsing —
 │   │                           mirrors design_tokens.py), lint_links.py
-│   │                           (dangling-wikilink linter, runs in CI),
-│   │                           writer_pack.py (bounded, versioned publisher
-│   │                           for private ENGE.WRITER library snapshots)
+│   │                           (dangling-wikilink linter, runs in CI)
 │   └── training/               Marp decks + design system
 │       ├── ai-builders-handbook.md   The master Marp deck (35 slides)
 │       ├── design.md                 Deck design system (read before authoring decks)
@@ -389,16 +387,6 @@ one (`model` optional); `/convert`, `/pending`, `/ingest`, `/review`,
 already work per-vault through the same `GET /wikis` discovery (the
 Studio passes the vault's *path* — `wikis/<slug>` — to the generator
 scripts).
-
-ENGE.WRITER uses a separate loopback-only publishing boundary:
-`GET /api/writer/libraries` discovers local vaults and
-`GET /api/writer/knowledge-pack?wiki=<slug>` emits the selected vault as a
-bounded `enge.knowledge-pack` v1 snapshot. The publisher lives in
-`wiki/scripts/writer_pack.py`; it caps packs at 500 pages and bodies at 12,000
-characters, keeps source/relationship provenance, and defaults procedures and
-policies to the craft lane. Only the production Writer origin and loopback
-development origins receive CORS access. Restart the Python server after
-changing the publisher or routes.
 
 ### Building the master deck
 

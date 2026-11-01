@@ -116,7 +116,7 @@ import md_view  # noqa: E402  (raw markdown -> on-brand HTML page renderer)
 import pending as _pending  # noqa: E402  (video-id matching for duplicate alerts)
 import watcher as _watcher  # noqa: E402  (channel subscriptions — stdlib at import;
 #                                          yt-dlp work runs via the venv python)
-import writer_pack as _writer_pack  # noqa: E402  (private ENGE.WRITER snapshot bridge)
+import writer_pack as _writer_pack  # noqa: E402  (read-only Writer snapshot bridge)
 
 import jobs as _jobs  # noqa: E402  (sibling module: jobs.py)
 import agent_runner as _agent  # noqa: E402  (agent provider layer — A6 step 1)

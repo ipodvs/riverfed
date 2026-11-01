@@ -1,0 +1,719 @@
+/*!
+ * @theme ai-builders
+ * @author The AI Builders Handbook
+ *
+ * Marp theme for the AI Builders training deck.
+ * Inspired by the Computacenter Brandbank conventions (large type, accent
+ * eyebrows, card grids, two-panel comparisons, outcome strips), recoloured
+ * for an independent dark/electric palette.
+ */
+
+@import-theme "default";
+
+:root {
+  /* ============ JEDI PALETTE ============
+     Each functional token has a Jedi association. The functional names
+     (--accent, --neural, --circuit…) stay for backwards compatibility with
+     existing card modifiers (.is-neural, .is-circuit, etc.). Jedi aliases
+     (--saber-*) point at the same hex values for new code.
+     See design.md → "Jedi palette" for the full mapping + rules.
+  */
+  --bg-cream:        #fafaff;     /* icy cream — default canvas */
+  --cream:           #f5f0e6;     /* Jedi-robe warm cream — for light-warm surfaces */
+  --bg-dark:         #0e1117;     /* deep space */
+  --bg-elevated:     #181b22;     /* twilight panel */
+  --foundation:      #0f1729;     /* Coruscant night */
+  --foundation-2:    #1a2540;
+  --accent:          #4f8cff;     /* Guardian Blue — Luke / Obi-Wan / Anakin */
+  --accent-hover:    #2f6fe6;
+  --neural:          #7a59e2;     /* Mace Windu Purple */
+  --circuit:         #46c98b;     /* Yoda / Consular Green */
+  --fibre:           #ff6b35;     /* Tatooine sunset / rare orange saber */
+  --voltage:         #ffd93d;     /* Star Wars logo gold + Sentinel saber (was #f2c00c) */
+  --united:          #ff4d4d;     /* SITH red — reserved for ALERT cards only */
+
+  /* Jedi aliases (same hex, lore-resonant names — pick whichever reads clearer) */
+  --saber-blue:       var(--accent);
+  --saber-blue-glow:  #4dbeff;     /* saber core glow — for shadows/auras, never filled */
+  --saber-purple:     var(--neural);
+  --saber-green:      var(--circuit);
+  --saber-yellow:     var(--voltage);
+  --saber-orange:     var(--fibre);
+  --saber-red:        var(--united);
+
+  --grey-1:          #1a1d24;
+  --grey-2:          #2a2f3a;
+  --grey-3:          #4a5160;
+  --grey-4:          #8a92a3;
+  --grey-5:          #c4c7cc;
+  --grey-6:          #eff1f4;
+
+  /* Layout */
+  --pad-x: 56px;
+  --pad-y: 44px;
+  --footer-h: 40px;     /* reserved footer band — content never enters it */
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: var(--bg-cream);
+  color: var(--foundation);
+}
+
+/* === BASE SLIDE === */
+
+section {
+  width: 1280px;
+  height: 720px;
+  box-sizing: border-box;
+  /* Reserve a footer band at the bottom — content never enters it */
+  padding: var(--pad-y) var(--pad-x) calc(var(--pad-y) + var(--footer-h));
+  font-size: 26px;
+  line-height: 1.25;
+  background: var(--bg-cream);
+}
+
+/* Decorative top-right mark — small brand dot */
+section::before {
+  content: "◆";
+  position: absolute;
+  right: var(--pad-x);
+  top: 36px;
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+/* Page number — bottom-right, sits in the reserved footer band */
+section::after {
+  content: attr(data-marpit-pagination);
+  position: absolute;
+  right: var(--pad-x);
+  bottom: 22px;
+  color: var(--grey-4);
+  font-size: 12px;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/* === TYPOGRAPHY === */
+
+h1, h2, h3, h4 {
+  margin: 0;
+  color: var(--foundation);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h1 { max-width: 940px; font-size: 56px; line-height: 0.96; }
+h2 { max-width: 920px; font-size: 30px; line-height: 1.18; font-weight: 500; color: var(--grey-3); margin-top: 14px; }
+h3 { font-size: 24px; line-height: 1.18; }
+
+p {
+  margin: 18px 0 0;
+  max-width: 880px;
+  color: var(--grey-1);
+}
+
+strong { color: var(--foundation); font-weight: 700; }
+em     { color: var(--grey-3); font-style: italic; }
+
+a { color: var(--accent); }
+
+/* === LISTS === */
+
+ul, ol {
+  margin: 22px 0 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+li {
+  position: relative;
+  margin: 11px 0;
+  padding-left: 28px;
+  color: var(--grey-1);
+  font-size: 24px;
+}
+
+li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+ol { counter-reset: item; }
+ol li {
+  counter-increment: item;
+  padding-left: 44px;
+}
+ol li::before {
+  content: counter(item, decimal-leading-zero);
+  top: 0;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* === QUOTES === */
+
+blockquote {
+  margin: 32px 0 0;
+  padding: 0 0 0 26px;
+  max-width: 900px;
+  border-left: 6px solid var(--accent);
+  color: var(--foundation);
+  font-size: 34px;
+  font-weight: 600;
+  font-style: italic;
+  line-height: 1.18;
+}
+
+/* === TABLES === */
+
+table {
+  width: 100%;
+  margin-top: 24px;
+  border-collapse: collapse;
+  font-size: 20px;
+}
+
+th, td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--grey-5);
+  text-align: left;
+}
+
+th {
+  background: var(--foundation);
+  color: white;
+  font-weight: 700;
+}
+
+/* === CODE === */
+
+code {
+  color: var(--foundation);
+  background: var(--grey-6);
+  border-radius: 4px;
+  padding: 0 0.24em;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+
+pre {
+  margin-top: 24px;
+  padding: 22px 26px;
+  border-radius: 10px;
+  background: var(--grey-1);
+  color: var(--grey-6);
+  font-size: 17px;
+  line-height: 1.45;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+pre code { background: transparent; color: inherit; padding: 0; }
+
+/* === REUSABLE COMPONENTS === */
+
+.eyebrow {
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  max-width: 720px;
+  color: var(--grey-3);
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.caption {
+  color: var(--grey-4);
+  font-size: 15px;
+  margin-top: 8px;
+}
+
+/* KPI grid — big numbers */
+.kpi {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 28px;
+}
+.kpi > * {
+  min-height: 130px;
+  padding: 22px 24px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 10px 30px rgb(15 23 41 / 8%);
+  border-top: 4px solid var(--accent);
+}
+/* When KPI is forced to one column (.kpi.stack), shrink heights so 3 fit */
+.kpi.stack {
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+.kpi.stack > * {
+  min-height: 0;
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 18px;
+  align-items: center;
+}
+.kpi.stack strong { margin: 0; font-size: 40px; }
+.kpi.stack p      { font-size: 16px; }
+.kpi strong {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--accent);
+  font-size: 56px;
+  line-height: 1;
+  font-weight: 800;
+}
+.kpi p { margin: 0; font-size: 19px; color: var(--grey-2); }
+
+/* Card grid */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 22px;
+}
+.cards > * {
+  min-height: 0;
+  padding: 20px 22px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 8px 22px rgb(15 23 41 / 7%);
+  border-top: 4px solid var(--accent);
+}
+.cards.four { grid-template-columns: repeat(4, 1fr); }
+.cards.two  { grid-template-columns: repeat(2, 1fr); }
+.cards .neural   { border-top-color: var(--neural); }
+.cards .circuit  { border-top-color: var(--circuit); }
+.cards .fibre    { border-top-color: var(--fibre); }
+.cards .voltage  { border-top-color: var(--voltage); }
+.cards h3 { margin-bottom: 8px; font-size: 22px; }
+.cards p  { margin-top: 0; font-size: 17px; color: var(--grey-2); line-height: 1.32; }
+.cards .num {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+/* Compact icon at the top of a card */
+.cards .icon, .six-up .icon, .steps .icon, .kpi .icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+.cards .icon img, .six-up .icon img, .steps .icon img, .kpi .icon img,
+.cards .icon svg, .six-up .icon svg, .steps .icon svg, .kpi .icon svg {
+  width: 100%; height: 100%; object-fit: contain;
+}
+
+/* Two-column layout */
+.two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+  margin-top: 28px;
+}
+.two-column.narrow { grid-template-columns: 0.9fr 1.1fr; }
+
+/* Old vs new comparison */
+.versus {
+  display: grid;
+  grid-template-columns: 1fr 60px 1fr;
+  gap: 0;
+  margin-top: 26px;
+  align-items: stretch;
+}
+.versus .arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 38px;
+  font-weight: 700;
+}
+.versus .panel {
+  padding: 22px 24px;
+  border-radius: 10px;
+  border: 1px solid var(--grey-5);
+  background: white;
+}
+.versus .panel h3 { font-size: 22px; }
+.versus .panel p, .versus .panel li { font-size: 20px; line-height: 1.34; }
+.versus .panel ul, .versus .panel ol { margin-top: 12px; }
+.versus .panel li { margin: 6px 0; }
+.versus .panel.old {
+  background: var(--grey-6);
+  border-color: var(--grey-5);
+}
+.versus .panel.new {
+  background: white;
+  border-top: 4px solid var(--accent);
+  box-shadow: 0 10px 28px rgb(15 23 41 / 8%);
+}
+.versus .panel h3 { margin-bottom: 10px; }
+
+/* Outcome strip */
+.outcomes {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  bottom: 60px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.outcomes div {
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: var(--foundation);
+  color: white;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* Pull-quote callout */
+.callout {
+  margin-top: 20px;
+  padding: 20px 26px;
+  border-radius: 10px;
+  background: var(--foundation);
+  color: white;
+  font-size: 22px;
+  line-height: 1.32;
+}
+.callout p, .callout strong, .callout h2, .callout h3, .callout em { color: white; }
+.callout strong { color: var(--accent); }
+.callout p { margin: 0; max-width: none; }
+.callout p + p { margin-top: 8px; }
+
+/* Stacked steps */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 22px;
+}
+.steps > * {
+  padding: 20px;
+  border-radius: 10px;
+  background: white;
+  border-top: 4px solid var(--accent);
+  box-shadow: 0 8px 22px rgb(15 23 41 / 7%);
+}
+.steps .num {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+  font-size: 26px;
+  font-weight: 800;
+}
+.steps h3 { font-size: 19px; margin-bottom: 6px; }
+.steps p  { font-size: 16px; margin-top: 0; color: var(--grey-2); line-height: 1.3; }
+
+/* Hex callout / six-up grid — default one-column inside each card */
+.six-up {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 22px;
+}
+.six-up > * {
+  padding: 18px 20px;
+  border-radius: 10px;
+  background: white;
+  border-left: 4px solid var(--accent);
+  box-shadow: 0 6px 18px rgb(15 23 41 / 6%);
+}
+.six-up .num {
+  display: block;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.six-up h3 { font-size: 18px; margin: 0 0 6px; line-height: 1.18; }
+.six-up p  { font-size: 15px; margin: 0; color: var(--grey-2); line-height: 1.34; }
+
+/* Icon-decorated variant: card laid out as [icon | text] */
+.six-up.iconic > * {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.six-up.iconic .icon {
+  grid-row: 1 / span 3;
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
+}
+.six-up.iconic .icon img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Citation — bottom-left, same baseline as page number, capped width so it
+   never collides with the page number on the right. */
+.cite {
+  position: absolute;
+  left: var(--pad-x);
+  bottom: 22px;
+  /* leave a 100px gutter on the right for the page number */
+  max-width: calc(100% - var(--pad-x) - var(--pad-x) - 100px);
+  color: var(--grey-4);
+  font-size: 12px;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+}
+
+/* Hide pagination, citation AND the brand-dot on hero slides — covers,
+   dividers, leads. These slides have their own visual identity; chrome
+   would be clutter. */
+section.cover::after,
+section.section::after,
+section.lead::after,
+section.cover::before,
+section.section::before,
+section.lead::before {
+  display: none;
+}
+section.cover .cite,
+section.section .cite,
+section.lead .cite {
+  display: none;
+}
+section.cover,
+section.section,
+section.lead {
+  /* No reserved footer band on hero slides — content can use full height */
+  padding-bottom: var(--pad-y);
+}
+
+/* Section divider icon */
+section.section .section-icon {
+  position: absolute;
+  left: var(--pad-x);
+  top: 50px;
+  width: 56px;
+  height: 56px;
+  color: var(--accent);
+  opacity: 0.95;
+}
+section.section .section-icon img { width: 100%; height: 100%; object-fit: contain; }
+
+/* === COVER SLIDE === */
+
+section.cover {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 70px;
+  background: var(--bg-dark);
+  color: white;
+  overflow: hidden;
+}
+section.cover::before { content: none; }
+section.cover::after { color: rgb(255 255 255 / 45%); }
+section.cover h1 { color: white; font-size: 88px; line-height: 0.94; max-width: 900px; }
+section.cover h2 { color: var(--grey-5); font-weight: 400; font-size: 30px; max-width: 760px; margin-top: 22px; }
+section.cover .eyebrow { color: var(--accent); }
+
+.cover-shapes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cover-shapes::before {
+  content: "";
+  position: absolute;
+  right: -180px;
+  top: -120px;
+  width: 600px;
+  height: 600px;
+  border: 60px solid var(--accent);
+  border-radius: 50%;
+  opacity: 0.35;
+}
+.cover-shapes::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: 40px;
+  width: 360px;
+  height: 360px;
+  border: 36px solid var(--neural);
+  border-radius: 50%;
+  opacity: 0.30;
+}
+
+/* Fixed Riverfed typographic lockup. The selected Studio design may
+   restyle the artifact around it, but never these two brand families. */
+.cover-wordmark {
+  position: absolute;
+  right: 80px;
+  top: 82px;
+  font-weight: 900;
+  font-size: 26px;
+  letter-spacing: -0.03em;
+  color: #fbfaf6;
+  z-index: 1;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+.cover-wordmark .dot {
+  color: #1d9e66;
+}
+
+.tag-row {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.tag-row span {
+  padding: 8px 14px;
+  border: 1px solid rgb(255 255 255 / 30%);
+  background: rgb(255 255 255 / 6%);
+  border-radius: 100px;
+  color: white;
+}
+
+/* === SECTION DIVIDER === */
+
+section.section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--foundation);
+  color: white;
+  overflow: hidden;       /* clip any bleed of decorative numbers */
+}
+section.section::before { content: none; }
+section.section::after { color: rgb(255 255 255 / 35%); }
+section.section h1 { color: white; font-size: 80px; line-height: 0.96; }
+section.section h2 { color: var(--accent); font-size: 28px; font-weight: 500; margin-top: 18px; }
+section.section .eyebrow { color: var(--accent); }
+
+/* Giant section number — right-aligned so multi-digit numbers don't bleed
+   off the slide edge. Sits inside the slide's right gutter. */
+.section-num {
+  position: absolute;
+  right: var(--pad-x);
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgb(255 255 255 / 6%);
+  font-size: 360px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-align: right;
+  pointer-events: none;
+}
+
+/* === DARK CONTENT === */
+
+section.dark {
+  background: var(--bg-dark);
+  color: var(--grey-5);
+}
+section.dark::after { color: var(--grey-4); }
+section.dark h1, section.dark h2, section.dark h3 { color: white; }
+section.dark p, section.dark li { color: var(--grey-5); }
+section.dark strong { color: white; }
+section.dark em     { color: var(--accent); font-style: italic; }
+section.dark a      { color: var(--accent); }
+section.dark code   { color: var(--accent); background: rgb(79 140 255 / 0.10); }
+section.dark .cite  { color: var(--grey-4); }
+section.dark .versus .panel.old { background: var(--grey-1); border-color: var(--grey-2); color: var(--grey-5); }
+section.dark .versus .panel.old h3, section.dark .versus .panel.old strong { color: white; }
+section.dark .versus .panel.new { background: var(--foundation-2); border-color: var(--accent); color: white; }
+section.dark .versus .panel.new h3 { color: white; }
+section.dark .cards > *, section.dark .kpi > *, section.dark .steps > *, section.dark .six-up > * {
+  background: var(--foundation-2);
+  color: white;
+  box-shadow: none;
+  border-color: var(--accent);
+}
+section.dark .cards h3, section.dark .kpi h3, section.dark .steps h3, section.dark .six-up h3 { color: white; }
+section.dark .cards p, section.dark .kpi p, section.dark .steps p, section.dark .six-up p { color: var(--grey-5); }
+section.dark .callout { background: var(--foundation-2); }
+section.dark blockquote { color: white; border-left-color: var(--accent); }
+
+/* === LEAD SLIDES (intro/outro statements) === */
+
+section.lead {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  background: var(--bg-cream);
+}
+section.lead h1 { font-size: 72px; text-align: center; margin: 0 auto; line-height: 0.98; }
+section.lead h2 { font-size: 32px; font-weight: 400; text-align: center; margin: 22px auto 0; color: var(--grey-3); }
+section.lead p  { text-align: center; margin: 22px auto 0; }
+section.lead blockquote { margin: 30px auto 0; text-align: center; border-left: none; padding: 0; }
+
+/* === IMAGE LAYOUTS === */
+
+img { max-width: 100%; height: auto; }
+
+.icon-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 24px;
+}
+.icon-row img { width: 96px; height: 96px; object-fit: contain; }
+
+.hero-img {
+  position: absolute;
+  right: -120px;
+  bottom: -120px;
+  width: 540px;
+  height: 540px;
+  opacity: 0.92;
+}
+
+/* Accent colour utility classes for cards */
+.is-neural  { border-top-color: var(--neural)  !important; }
+.is-circuit { border-top-color: var(--circuit) !important; }
+.is-fibre   { border-top-color: var(--fibre)   !important; }
+.is-voltage { border-top-color: var(--voltage) !important; }
+.is-united  { border-top-color: var(--united)  !important; }
+.is-neural  .num { color: var(--neural); }
+.is-circuit .num { color: var(--circuit); }
+.is-fibre   .num { color: var(--fibre); }
+.is-voltage .num { color: var(--voltage); }
+.is-united  .num { color: var(--united); }

@@ -1,0 +1,63 @@
+# PARA organizes by ACTIONABILITY, not subject — so the dashboard's job is to
+# answer "what is this for, and how soon do I act on it?" at a glance. Projects
+# lead because they are the only layer with an end state; areas and resources
+# are standing context.
+filters:
+  or:
+    - file.hasTag("wiki/projects")
+    - file.hasTag("wiki/areas")
+    - file.hasTag("wiki/resources")
+
+properties:
+  outcome:
+    displayName: Outcome
+  standard:
+    displayName: The standard
+  status:
+    displayName: Status
+  last_updated:
+    displayName: Updated
+
+views:
+  - type: table
+    name: "Active projects"
+    filters:
+      and:
+        - file.hasTag("wiki/projects")
+        - 'status == "active"'
+    order:
+      - file.name
+      - outcome
+      - last_updated
+
+  # Not stalled — blocked on someone else. Separated because the weekly
+  # nudge for these is a different action than working them.
+  - type: table
+    name: "Waiting on someone"
+    filters:
+      and:
+        - file.hasTag("wiki/projects")
+        - 'status == "waiting"'
+    order:
+      - file.name
+      - outcome
+      - last_updated
+
+  - type: table
+    name: "Areas (standing commitments)"
+    filters:
+      and:
+        - file.hasTag("wiki/areas")
+    order:
+      - file.name
+      - standard
+      - last_updated
+
+  - type: table
+    name: "Resources"
+    filters:
+      and:
+        - file.hasTag("wiki/resources")
+    order:
+      - file.name
+      - last_updated

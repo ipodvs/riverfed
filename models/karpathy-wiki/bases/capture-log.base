@@ -1,0 +1,52 @@
+# The capture layer is the pipeline's 1:1 log of what was ingested, when, and
+# from where — the human-readable twin of the watcher's per-channel
+# subscriptions. Uses no list-length formulas, so it exercises only plainly
+# documented Base constructs.
+filters:
+  and:
+    - file.hasTag("wiki/{capture_folder}")
+
+properties:
+  title:
+    displayName: Title
+  channel:
+    displayName: Channel
+  ingested:
+    displayName: Ingested
+  published:
+    displayName: Published
+  duration:
+    displayName: Length
+
+views:
+  - type: table
+    name: "Recent captures (30 days)"
+    filters:
+      and:
+        - '(today() - date(ingested)).days <= 30'
+    order:
+      - title
+      - channel
+      - ingested
+      - duration
+
+  - type: table
+    name: "By channel"
+    order:
+      - title
+      - channel
+      - published
+      - ingested
+    groupBy:
+      property: channel
+      direction: ASC
+
+  - type: table
+    name: "All captures"
+    order:
+      - file.name
+      - title
+      - channel
+      - published
+      - ingested
+      - duration

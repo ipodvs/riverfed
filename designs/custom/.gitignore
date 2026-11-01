@@ -1,0 +1,4 @@
+# Keep this directory in the repo but ignore everything inside it.
+# Custom designs are local-only.
+*
+!.gitignore

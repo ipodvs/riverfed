@@ -1,0 +1,48 @@
+# The B2B audit surface: "here is your operation, structured" — browsable in
+# the tool an ops owner may already have open. This is the human-readable twin
+# of what studio_skills.py compiles into a Claude Code skill library.
+filters:
+  or:
+    - file.hasTag("wiki/procedures")
+    - file.hasTag("wiki/policies")
+    - file.hasTag("wiki/runbooks")
+
+properties:
+  kind:
+    displayName: Kind
+  trigger:
+    displayName: When to run
+  last_updated:
+    displayName: Updated
+
+views:
+  - type: table
+    name: "Full catalogue"
+    order:
+      - file.name
+      - kind
+      - last_updated
+    groupBy:
+      property: file.folder
+      direction: ASC
+
+  # Procedures are indexed by their trigger, not their name — an operator
+  # arrives knowing the situation, not what the SOP was titled.
+  - type: table
+    name: "Procedures by trigger"
+    filters:
+      and:
+        - file.hasTag("wiki/procedures")
+    order:
+      - file.name
+      - trigger
+      - last_updated
+
+  - type: table
+    name: "Runbooks (when it breaks)"
+    filters:
+      and:
+        - file.hasTag("wiki/runbooks")
+    order:
+      - file.name
+      - last_updated

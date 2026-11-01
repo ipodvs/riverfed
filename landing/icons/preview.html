@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Riverfed · icon preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #0a0d12;
+    --panel: #0f1729;
+    --text: #e6e8ee;
+    --muted: #9aa3b5;
+    --saber-blue: #4f8cff;
+    --saber-purple: #7a59e2;
+    --saber-green: #46c98b;
+    --saber-yellow: #ffd93d;
+    --grid-border: #1a2540;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+  }
+  h1 { margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .lede { color: var(--muted); margin: 0 0 32px; font-size: 14px; max-width: 60ch; line-height: 1.5; }
+  .swatch-row { display: flex; gap: 12px; margin: 24px 0 40px; flex-wrap: wrap; }
+  .swatch {
+    padding: 8px 14px; border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 12px; color: #fff;
+  }
+  h2 { font-size: 16px; font-weight: 600; color: var(--muted); margin: 40px 0 16px;
+       text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-mono); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+  .cell {
+    background: var(--panel);
+    border: 1px solid var(--grid-border);
+    border-radius: 12px;
+    padding: 24px 16px 14px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    transition: border-color 0.15s ease;
+  }
+  .cell:hover { border-color: var(--saber-blue); }
+  .icon-frame { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
+  .icon-frame img, .icon-frame svg { width: 64px; height: 64px; display: block; }
+  .name { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: center; }
+  .recolor-block { background: var(--panel); border: 1px solid var(--grid-border); border-radius: 12px; padding: 24px; margin-top: 20px; }
+  .recolor-block .row { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .recolor-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .recolor-cell .label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .recolor-cell svg { width: 56px; height: 56px; }
+  .swatch.blue { background: var(--saber-blue); }
+  .swatch.purple { background: var(--saber-purple); }
+  .swatch.green { background: var(--saber-green); }
+  .swatch.yellow { background: var(--saber-yellow); color: #0a0d12; }
+  .swatch.text { background: #fff; color: #0a0d12; }
+  footer { color: var(--muted); margin-top: 60px; font-size: 12px; }
+  code { font-family: var(--font-mono); background: var(--panel); padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <h1>Riverfed · icon bank</h1>
+  <p class="lede">25 icons (22 utility + 3 brand marks). All are original and replace the Streamline icons borrowed from the Computacenter brand library. Single source of truth: <code>build.py</code>. Default render colour is saber-blue; each icon inherits <code>currentColor</code> so themes work.</p>
+
+  <h2>Palette</h2>
+  <div class="swatch-row">
+    <span class="swatch blue">#4f8cff · saber-blue (default)</span>
+    <span class="swatch purple">#7a59e2 · saber-purple</span>
+    <span class="swatch green">#46c98b · saber-green</span>
+    <span class="swatch yellow">#ffd93d · saber-yellow</span>
+    <span class="swatch text">currentColor → inherits parent</span>
+  </div>
+
+  <h2>Recolour demo · same icon, different parent colour</h2>
+  <div class="recolor-block">
+    <div class="row">
+      <div class="recolor-cell" style="color: var(--saber-blue)"><img src="folder-spark.svg"><span class="label">default img</span></div>
+      <div class="recolor-cell" style="color: var(--saber-purple)"><svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 20 Q8 16 12 16 L24 16 L28 20 L52 20 Q56 20 56 24 L56 50 Q56 54 52 54 L12 54 Q8 54 8 50 Z"/><path d="M46,6 L48,10 L52,12 L48,14 L46,18 L44,14 L40,12 L44,10 Z" opacity="0.9"/></svg><span class="label">purple</span></div>
+      <div class="recolor-cell" style="color: var(--saber-green)"><svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 20 Q8 16 12 16 L24 16 L28 20 L52 20 Q56 20 56 24 L56 50 Q56 54 52 54 L12 54 Q8 54 8 50 Z"/><path d="M46,6 L48,10 L52,12 L48,14 L46,18 L44,14 L40,12 L44,10 Z" opacity="0.9"/></svg><span class="label">green</span></div>
+      <div class="recolor-cell" style="color: var(--saber-yellow)"><svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 20 Q8 16 12 16 L24 16 L28 20 L52 20 Q56 20 56 24 L56 50 Q56 54 52 54 L12 54 Q8 54 8 50 Z"/><path d="M46,6 L48,10 L52,12 L48,14 L46,18 L44,14 L40,12 L44,10 Z" opacity="0.9"/></svg><span class="label">yellow</span></div>
+      <div class="recolor-cell" style="color: #ffffff"><svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 20 Q8 16 12 16 L24 16 L28 20 L52 20 Q56 20 56 24 L56 50 Q56 54 52 54 L12 54 Q8 54 8 50 Z"/><path d="M46,6 L48,10 L52,12 L48,14 L46,18 L44,14 L40,12 L44,10 Z" opacity="0.9"/></svg><span class="label">white</span></div>
+    </div>
+  </div>
+
+  <h2>The set</h2>
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    Edit <code>build.py</code> and re-run <code>py -3.13 landing/icons/build.py</code> to regenerate.
+  </footer>
+
+<script>
+  const ICONS = [
+    "ai-spark","announcement","browser-build","calendar-schedule","chat-check",
+    "cog","coins-stack","critical-thinking","database-ai","file-spark",
+    "folder-spark","hub-integration","laptop","layers","layers-stack",
+    "loop","mail-send","megaphone","network","startup",
+    "trophy","users-team",
+    "riverfed-mark","riverfed-mark-ivory"
+  ];
+  const grid = document.getElementById("grid");
+  for (const name of ICONS) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.innerHTML = `<div class="icon-frame"><img src="${name}.svg" alt="${name}"></div><div class="name">${name}</div>`;
+    grid.appendChild(cell);
+  }
+</script>
+</body>
+</html>

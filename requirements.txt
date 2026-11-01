@@ -1,0 +1,32 @@
+markitdown[all]>=0.1.0,<1.0
+yt-dlp>=2024.10.0
+
+# Readable-article extraction for non-YouTube web URLs (convert.py). Isolates
+# the main article HTML (strips nav/sidebars/footers/cookie bars) before
+# markitdown renders it, so a blog post ingests clean instead of buried in
+# site chrome. lxml is already pulled in by markitdown[all].
+readability-lxml>=0.8.1
+
+# Preferred converter for office documents (convert.py) — Firecrawl's anydoc,
+# a Rust document parser with a thin Python binding (single ~3 MB abi3 wheel,
+# no system deps). Tried first for Word/PowerPoint/Excel/OpenDocument/RTF/
+# EPUB; markitdown remains the fallback, so every format still converts
+# without it. Cap below 0.2: pre-1.0 crate, API may move.
+firecrawl-anydoc>=0.1.6,<0.2
+
+# Tier 2: video frame extraction + on-screen text OCR.
+# `--frames` flag on convert.py uses these; everything still works without
+# them (skipping with a friendly warning).
+imageio-ffmpeg>=0.5.1   # bundled ffmpeg binary — no system install needed
+pytesseract>=0.3.10     # wrapper around Tesseract OCR (install Tesseract separately
+                        # — see README; `winget install UB-Mannheim.TesseractOCR`)
+
+# Studio: native PowerPoint generation (studio_pptx.py).
+# python-docx is already used by wiki/training/scripts/build_speaker_doc.py
+# for the Word doc; python-pptx is its sibling for PowerPoint.
+python-pptx>=1.0
+python-docx>=1.0
+
+# Studio: Anki flashcard decks (studio_anki.py) — renders the agent's card
+# JSON into an importable .apkg package.
+genanki>=0.13

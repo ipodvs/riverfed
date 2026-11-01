@@ -1,0 +1,51 @@
+# Minimal CI — the two-collaborator safety net (roadmap Track B3).
+#
+# Catches what actually bit us: a syntax error in any script shipping
+# silently, a manifest/preset that stopped parsing, a dangling wiki link,
+# a broken nav.js. Runs in well under 2 minutes; no pip installs needed —
+# every checked script is stdlib-only on its CI-exercised path (heavy deps
+# like yt-dlp/pptx are only imported at runtime by paths CI doesn't take).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: py_compile every tracked script
+        run: git ls-files -z '*.py' | xargs -0 python -m py_compile
+
+      # Personal vaults live in the vault home (~/RiverfedVaults) since the
+      # C1 split — a checkout only carries the demo vault (riverfed-ops).
+      - name: pending.py — vault resolution + source scan (demo vault)
+        run: python wiki/scripts/pending.py --wiki riverfed-ops
+
+      - name: ingest.py --dry-run — model load + prompt template presence
+        run: python wiki/scripts/ingest.py --dry-run --wiki riverfed-ops
+
+      - name: design presets parse (design_tokens.py)
+        run: python wiki/scripts/design_tokens.py
+
+      - name: knowledge-model manifests parse (model_registry.py)
+        run: python wiki/scripts/model_registry.py
+
+      - name: unit tests (frontmatter, folder validation, scaffold, tags)
+        run: python -m unittest discover -s tests -v
+
+      - name: wiki link integrity (lint_links.py)
+        run: python wiki/scripts/lint_links.py
+
+      - name: nav.js syntax
+        run: node --check landing/nav.js

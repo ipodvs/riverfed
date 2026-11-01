@@ -1,0 +1,106 @@
+# =================== Python ===================
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+
+# =================== Node ===================
+# Dependencies are declared in package.json + package-lock.json; the
+# installed tree is regenerable via `npm install` and platform-specific
+# (puppeteer ships per-OS browser binaries), so it must not be committed.
+node_modules/
+
+# =================== Runtime / logs ===================
+server.log
+*.log
+
+# =================== IDE / editor / OS ===================
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Word / PowerPoint lockfiles
+~$*
+
+# =================== Secrets ===================
+.env
+.env.*
+!.env.example
+credentials.json
+*.pem
+*.key
+
+# =================== Generated converter output ===================
+# Personal converted transcripts — generated locally, not for the repo.
+# Folder structure is kept via .gitkeep.
+output/*
+!output/.gitkeep
+
+# Extracted video frames (from `convert.py --frames`) — large, regenerable
+output/*-frames/
+
+# Per-vault transcript staging for user-created knowledge bases
+# (wikis/<slug>/output/). Same rule as the root output/: transcripts are
+# personal + regenerable. The vault PAGES (sources/topics/entities/concepts)
+# ARE tracked, exactly like the original wiki/.
+wikis/*/output/
+
+# Per-vault runtime state (auto-review counter)
+wikis/*/.state/
+
+# =================== Marp slide previews ===================
+# Per-slide PNGs are large and regenerable from the markdown.
+wiki/training/out/preview/
+
+# =================== Studio-generated decks ===================
+# Per-prompt output from the /studio generators (studio_marp.py et al.):
+# slugified .md + rendered .html/.pdf/.pptx + speaker notes. Personal,
+# regenerable scratch — like output/. The canonical handbook lives in
+# wiki/training/out/ and IS checked in; this folder is not.
+wiki/training/studio/
+
+# =================== Local archives + reference material ===================
+wiki.zip
+
+# Original logo kit (we ship the extracted SVG separately)
+landing/logo-kit/
+
+# 211 MB reference workspace, not the product
+wiki/training/Codex Personal Assistance/
+
+# =================== Wiki runtime state ===================
+# Auto-review counter (regenerates per run)
+wiki/.state/
+
+# =================== Obsidian local state ===================
+# Repo root opened as an Obsidian vault — pure app state, never tracked.
+/.obsidian/
+
+# Since the C1 vault split, repo wiki/ is product code, not a vault — the
+# real wiki vault (and its .obsidian) lives in the vault home. Opening the
+# old location in Obsidian recreates default config here; ignore all of it.
+wiki/.obsidian/
+
+# Plugin binaries in demo vaults are vendored third-party code plus
+# per-user settings — regenerable by Obsidian from community-plugins.json,
+# which IS tracked.
+wikis/*/.obsidian/plugins/
+*.tmp.pptx
+
+# User-customised designs (created/edited via the Studio UI). Shipped
+# presets in designs/*.md ARE checked in; designs/custom/*.md are
+# local-only so each contributor can keep their own palette without
+# stepping on the shipped ones.
+designs/custom/*.md
+
+# User-customised knowledge models — same contract as designs/custom/.
+# Shipped models in models/<id>/ ARE checked in.
+models/custom/

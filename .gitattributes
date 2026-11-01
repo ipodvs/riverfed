@@ -1,0 +1,34 @@
+# Normalize all text files to LF in the repo, and check them out as LF.
+# Rationale: the editing tooling in this project (Claude Code's Write/Edit,
+# plus the existing .cmd/.vbs launchers already on disk) all use LF, so
+# forcing LF everywhere eliminates the CRLF<->LF "phantom-dirty" churn that
+# made files show as modified with zero content diff. Keeping a single
+# convention also means two collaborators on different machines never fight
+# over line endings.
+* text=auto eol=lf
+
+# Windows launchers currently work as LF on disk — keep them LF (above) to
+# avoid needless churn. (cmd.exe / Windows Script Host tolerate LF here.)
+
+# Binary files: never normalize, never diff as text.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.svg   text eol=lf
+*.pdf   binary
+*.pptx  binary
+*.potx  binary
+*.docx  binary
+*.dotx  binary
+*.xlsx  binary
+*.mp3   binary
+*.mp4   binary
+*.wav   binary
+*.zip   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary

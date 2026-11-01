@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio · Riverfed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+<style>
+  :root {
+    /* "Porcelain" light theme (2026-07 redesign): see index.html tokens. */
+    --bg:           #f7f8fa;
+    --bg-elevated:  #eef1f5;
+    --bg-card:      #ffffff;
+    --border:       #e2e5eb;
+    --border-soft:  #eaedf2;
+    --text:         #15171c;
+    --text-muted:   #5c6470;
+    --text-dim:     #7d8490;
+    --accent:       #157347;
+    --accent-hover: #115d3a;
+    --saber-green:  #1d9e66;
+    --saber-yellow: #8a6100;
+    /* Legacy gradient tokens, now SOLID: one accent, zero gradients. */
+    --grad:         #157347;
+    --grad-cta:     #157347;
+    --grad-cta-hover: #115d3a;
+    --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono:    'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+    --mono:         var(--font-mono);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* Top navigation is injected by /nav.js (single source of truth). */
+
+  /* === LAYOUT === */
+  .container { max-width: 1180px; margin: 40px auto 0; padding: 0 clamp(20px, 4vw, 56px); }
+
+  h1 {
+    margin: 0 0 12px; font-size: clamp(34px, 4.5vw, 46px);
+    font-weight: 700; letter-spacing: -0.025em; line-height: 1.08;
+  }
+  h1 .grad { color: var(--accent); }
+  .lede { color: var(--text-muted); font-size: 17px; line-height: 1.6; max-width: 58ch; margin: 0 0 48px; }
+
+  /* === WIKI PICKER === */
+  .picker-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 28px 30px; margin-bottom: 24px;
+    box-shadow: 0 1px 2px rgba(21,23,28,0.03);
+  }
+  .picker-card .eyebrow {
+    color: var(--text-dim); font-family: var(--mono);
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    margin: 0 0 10px;
+  }
+  .picker-card h3 { margin: 0 0 16px; font-size: 22px; }
+  .picker-card .row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  select#wikiSelect {
+    flex: 1; min-width: 220px;
+    padding: 12px 16px; border-radius: 12px;
+    background: var(--bg-elevated); color: var(--text);
+    border: 1px solid var(--border); font-size: 15px; font-family: inherit;
+    cursor: pointer;
+  }
+  select#wikiSelect:focus { outline: none; border-color: var(--accent); }
+  #wikiStats {
+    display: inline-flex; gap: 14px; color: var(--text-muted); font-family: var(--mono); font-size: 13px;
+  }
+  #wikiStats b { color: var(--text); }
+
+  /* === DESIGN PICKER === */
+  .design-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-top: 14px;
+  }
+  @media (max-width: 880px) { .design-grid { grid-template-columns: 1fr; } }
+  .design-tile {
+    background: var(--bg-card); border: 1.5px solid var(--border);
+    border-radius: 8px; padding: 18px;
+    cursor: pointer; user-select: none;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .design-tile:hover { border-color: rgba(21, 115, 71,0.5); }
+  .design-tile.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(21, 115, 71,0.13);
+  }
+  .design-tile .swatches {
+    display: flex; gap: 0; border-radius: 6px; overflow: hidden;
+    height: 24px;
+  }
+  .design-tile .swatches span {
+    flex: 1; display: block;
+  }
+  .design-tile .name {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .design-tile .name .radio {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid var(--border); flex-shrink: 0;
+    position: relative; transition: border-color 0.15s;
+  }
+  .design-tile.selected .name .radio {
+    border-color: var(--accent);
+    background: radial-gradient(circle at center, var(--accent) 0 4px, transparent 5px);
+  }
+  .design-tile .desc {
+    font-size: 12px; color: var(--text-muted); line-height: 1.45;
+    margin: 0;
+  }
+  .design-tile .font-hint {
+    font-size: 11px; color: var(--text-dim, var(--text-muted));
+    font-family: var(--mono); letter-spacing: 0.05em;
+    opacity: 0.7;
+  }
+  .design-tile-placeholder {
+    grid-column: 1 / -1;
+    padding: 28px; text-align: center;
+    color: var(--text-muted); font-family: var(--mono); font-size: 13px;
+  }
+  /* Action row (Edit / Reset / Delete): overlays the tile */
+  .design-tile { position: relative; }
+  .design-tile .actions {
+    position: absolute; top: 10px; right: 10px;
+    display: flex; gap: 6px;
+    opacity: 0; transition: opacity 0.15s ease;
+  }
+  .design-tile:hover .actions,
+  .design-tile.selected .actions,
+  .design-tile:focus-within .actions { opacity: 1; }
+  .design-tile .actions button {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .design-tile .actions button:hover {
+    color: var(--accent); border-color: var(--accent);
+    background: rgba(21, 115, 71, 0.08);
+  }
+  .design-tile .actions button.danger:hover {
+    color: #d43333; border-color: #d43333;
+    background: rgba(212, 51, 51, 0.06);
+  }
+  .design-tile .badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 4px;
+    background: rgba(21, 115, 71, 0.10); color: var(--accent);
+    margin-left: 6px;
+  }
+  .design-tile .badge.custom { background: var(--bg-elevated); color: var(--text-muted); }
+  /* The "+ New design" tile is a tile that's dashed-outlined and centered */
+  .design-tile.new-tile {
+    border-style: dashed; border-color: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-weight: 600;
+    text-align: center; min-height: 160px;
+  }
+  .design-tile.new-tile:hover { border-color: var(--accent); color: var(--accent); }
+  .design-tile.new-tile .plus { font-size: 28px; line-height: 1; margin-bottom: 6px; }
+
+  /* === EDITOR MODAL === */
+  .modal-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(21, 23, 28, 0.45); backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: flex-start; justify-content: center;
+    padding: 48px 20px;
+    overflow-y: auto;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%; max-width: 720px;
+    padding: 28px 32px;
+    box-shadow: 0 20px 48px rgba(21,23,28,0.18);
+  }
+  .modal h2 { margin: 0 0 4px; font-size: 24px; }
+  .modal .sub-modal { color: var(--text-muted); font-size: 13px; margin: 0 0 22px; }
+  .modal .field { margin-bottom: 14px; }
+  .modal label.field-label {
+    display: block; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 6px;
+  }
+  .modal input[type="text"], .modal textarea, .modal input[type="color"] {
+    width: 100%; padding: 10px 12px;
+    background: var(--bg-elevated); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-family: inherit;
+  }
+  .modal textarea { min-height: 70px; resize: vertical; }
+  .modal input:focus, .modal textarea:focus { outline: none; border-color: var(--accent); }
+  .modal .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .modal .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .modal .grid-2, .modal .grid-3 { grid-template-columns: 1fr; } }
+  .colour-pair { display: flex; gap: 6px; align-items: center; }
+  .colour-pair input[type="color"] {
+    width: 38px; height: 38px; padding: 2px;
+    border-radius: 6px; cursor: pointer; flex-shrink: 0;
+  }
+  .colour-pair input[type="text"] { flex: 1; font-family: var(--mono); }
+  .modal .modal-section-title {
+    margin: 22px 0 10px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text);
+  }
+  .modal .modal-section-title:first-of-type { border-top: none; padding-top: 0; }
+  .modal-footer {
+    display: flex; gap: 10px; justify-content: flex-end;
+    margin-top: 22px; padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .modal-footer .grow { flex: 1; }
+  .modal button {
+    padding: 10px 20px; border-radius: 7px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border);
+    background: var(--bg-elevated); color: var(--text);
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    font-family: inherit;
+  }
+  .modal button:hover { border-color: var(--accent); color: var(--accent); }
+  .modal button.primary {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .modal button.primary:hover { background: var(--accent-hover); color: #fff; }
+  .modal button.danger:hover { color: #d43333; border-color: #d43333; }
+  .modal .live-swatches {
+    display: flex; gap: 0; border-radius: 8px; overflow: hidden;
+    height: 28px; margin-bottom: 18px;
+    border: 1px solid var(--border);
+  }
+  .modal .live-swatches span { flex: 1; transition: background 0.2s; }
+  .modal .error-msg {
+    color: #d43333; font-size: 13px; margin-top: 10px;
+    min-height: 18px;
+  }
+
+  /* === STUDIO CARDS === */
+  .studio-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 26px;
+  }
+  @media (max-width: 880px) { .studio-grid { grid-template-columns: 1fr; } }
+  .studio-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 32px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 1px 2px rgba(21,23,28,0.03);
+  }
+  .studio-card .kicker {
+    display: block;
+    padding: 0; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    border-radius: 0;
+    margin-bottom: 14px;
+  }
+  .studio-card.marp .kicker,
+  .studio-card.diagram .kicker,
+  .studio-card.pptx .kicker {
+    color: var(--text-dim);
+    background: transparent;
+    border: 0;
+  }
+  .studio-card h2 {
+    margin: 0 0 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.01em;
+  }
+  .studio-card .sub { color: var(--text-muted); font-size: 14px; line-height: 1.5; margin: 0 0 20px; }
+  .studio-card label {
+    display: block; color: var(--text-muted);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .studio-card textarea, .studio-card input[type="text"], .studio-card input[type="number"] {
+    width: 100%;
+    background: var(--bg-elevated); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 11px 13px; font-family: inherit; font-size: 15px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .studio-card textarea { min-height: 96px; resize: vertical; line-height: 1.45; }
+  .studio-card textarea:focus, .studio-card input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(21, 115, 71,0.14);
+  }
+  .field { margin-bottom: 16px; }
+  .field-row { display: flex; gap: 14px; }
+  .field-row .field { flex: 1; }
+
+  /* Speaking-guide toggle */
+  .guide-toggle {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; margin-bottom: 16px;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .guide-toggle:hover { border-color: var(--accent); }
+  .guide-toggle input[type="checkbox"] {
+    margin: 0; width: 18px; height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .guide-toggle .label { flex: 1; }
+  .guide-toggle .label .title {
+    color: var(--text); font-size: 14px; font-weight: 600;
+    margin: 0;
+  }
+  .guide-toggle .label .hint {
+    color: var(--text-muted); font-size: 12px; line-height: 1.4;
+    margin: 2px 0 0;
+  }
+  .guide-toggle .label .hint code {
+    background: rgba(21, 115, 71,0.08); color: var(--accent);
+    padding: 1px 5px; border-radius: 3px; font-size: 11px;
+    font-family: var(--mono);
+  }
+  .studio-card button {
+    margin-top: auto;
+    padding: 13px 26px; border: none; border-radius: 7px;
+    background: var(--accent); color: #ffffff;
+    font-size: 15px; font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .studio-card button:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+  .studio-card button:disabled {
+    background: var(--bg-elevated);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: none;
+    border: 1px solid var(--border);
+  }
+  .status {
+    margin-top: 14px; padding: 12px 16px; border-radius: 8px;
+    font-family: var(--mono); font-size: 13px; line-height: 1.5;
+    border: 1px solid var(--border);
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.ok    { color: var(--saber-green); background: rgba(29,158,102,0.06); border-color: rgba(29,158,102,0.30); }
+  .status.err   { color: #d43333;             background: rgba(212,51,51,0.05);  border-color: rgba(212,51,51,0.30); }
+  .status.busy  { color: var(--text-muted);  background: var(--bg-elevated); }
+  .status a { color: inherit; text-decoration: underline; }
+
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid rgba(21,23,28,0.12);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: -1px;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* === FOOTER === */
+  footer {
+    margin-top: 60px; padding: 28px 0 50px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--text-dim); font-size: 13px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div data-pa-nav></div>
+<script>
+  (function loadSharedNav() {
+    const script = document.createElement("script");
+    script.src = location.protocol === "file:" ? "nav.js" : "/nav.js";
+    script.defer = true;
+    document.head.appendChild(script);
+  }());
+</script>
+
+<div class="container">
+  <h1>The <span class="grad">Studio</span></h1>
+  <p class="lede">
+    Pick a wiki, write a one-line brief, and generate a brand-styled Marp
+    deck or an Excalidraw diagram. The Studio uses Claude Code or Codex with your
+    subscription authentication, following the same workflow as wiki ingest.
+  </p>
+
+  <div class="picker-card">
+    <div class="eyebrow">01 · Choose your knowledge base</div>
+    <h3>Source knowledge base</h3>
+    <div class="row">
+      <select id="wikiSelect" aria-label="Source knowledge base">
+        <option value="">Loading knowledge bases…</option>
+      </select>
+      <div id="wikiStats"></div>
+    </div>
+  </div>
+
+  <div class="picker-card">
+    <div class="eyebrow">02 · Choose the artifact design</div>
+    <h3>Output identity</h3>
+    <p class="sub" style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin: -6px 0 6px;">
+      Each design follows the
+      <a href="https://github.com/google-labs-code/design.md" target="_blank" rel="noopener" style="color: var(--accent);">DESIGN.md spec</a>
+      (YAML tokens + markdown rationale). The Studio interface always keeps
+      the Riverfed type system. This choice applies only to generated
+      artifacts, passing one palette, type system, and component vocabulary
+      into every renderer.
+    </p>
+    <div class="design-grid" id="designGrid" role="radiogroup" aria-label="Design preset">
+      <div class="design-tile-placeholder">Loading designs…</div>
+    </div>
+  </div>
+
+  <div class="studio-grid">
+
+    <div class="studio-card marp">
+      <span class="kicker">Marp deck</span>
+      <h2>Generate a slide deck</h2>
+      <p class="sub">
+        The agent reads the wiki + <code>wiki/training/design.md</code> and
+        emits Marp markdown. ~2–5 minutes per deck. Output lands in
+        <code>wiki/training/studio/</code>.
+      </p>
+      <div class="field">
+        <label for="marpPrompt">What's the deck about?</label>
+        <textarea id="marpPrompt" placeholder="e.g. How operators actually use Claude Code in marketing"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="marpSlides">Slides</label>
+          <input id="marpSlides" type="number" min="4" max="60" value="14">
+        </div>
+        <div class="field" style="flex: 2;">
+          <label for="marpAudience">Audience</label>
+          <input id="marpAudience" type="text" value="Operators who already use AI agents">
+        </div>
+      </div>
+      <label class="guide-toggle" for="marpGuide">
+        <input id="marpGuide" type="checkbox" checked>
+        <span class="label">
+          <p class="title">Also generate a speaking guide</p>
+          <p class="hint">Adds a slide-by-slide presenter script next to the deck in two formats: <code>&lt;name&gt;-speaker-notes.md</code> and a styled Word <code>.docx</code> using the chosen design's palette + fonts.</p>
+        </span>
+      </label>
+      <button id="marpGo" type="button">Generate deck</button>
+      <div class="status" id="marpStatus"></div>
+    </div>
+
+    <div class="studio-card diagram">
+      <span class="kicker">Excalidraw</span>
+      <h2>Generate a diagram</h2>
+      <p class="sub">
+        The agent reads the wiki + the Excalidraw conventions in
+        <code>design.md</code> and emits a brand-coloured
+        <code>.excalidraw</code> file. Drag into excalidraw.com to view.
+        Output lands in <code>diagrams/studio/</code>.
+      </p>
+      <div class="field">
+        <label for="diagramPrompt">What should the diagram show?</label>
+        <textarea id="diagramPrompt" placeholder="e.g. The three-layer wiki architecture: sources → topics+entities+concepts → index"></textarea>
+      </div>
+      <label class="guide-toggle" for="diagramGuide">
+        <input id="diagramGuide" type="checkbox">
+        <span class="label">
+          <p class="title">Also generate a presenting guide</p>
+          <p class="hint">One-page walkthrough for talking through the diagram, saved as <code>&lt;name&gt;-presenting-notes.md</code>.</p>
+        </span>
+      </label>
+      <button id="diagramGo" type="button">Generate diagram</button>
+      <div class="status" id="diagramStatus"></div>
+    </div>
+
+    <div class="studio-card pptx" style="grid-column: 1 / -1;">
+      <span class="kicker">Native PowerPoint</span>
+      <h2>Generate an editable .pptx</h2>
+      <p class="sub">
+        The agent reads the wiki and emits structured slide JSON; Python
+        renders it to a native PowerPoint file with real editable text
+        boxes (not Marp's flattened export). Tier 1 layouts: cover, lead,
+        section, content, KPI, quote. ~2–5 min per deck. Output lands in
+        <code>wiki/training/studio/&lt;name&gt;.pptx</code>.
+        <br><br>
+        <em style="color: var(--text-dim);">For richer layouts (versus
+        panels, six-up grids, cards), use the Marp deck above. It has
+        the full component library.</em>
+      </p>
+      <div class="field">
+        <label for="pptxPrompt">What's the deck about?</label>
+        <textarea id="pptxPrompt" placeholder="e.g. The macro shift to agents for a 15-min internal lunch-and-learn"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="pptxSlides">Slides</label>
+          <input id="pptxSlides" type="number" min="4" max="40" value="12">
+        </div>
+        <div class="field" style="flex: 2;">
+          <label for="pptxAudience">Audience</label>
+          <input id="pptxAudience" type="text" value="Operators who already use AI agents">
+        </div>
+      </div>
+      <label class="guide-toggle" for="pptxGuide">
+        <input id="pptxGuide" type="checkbox" checked>
+        <span class="label">
+          <p class="title">Also generate a speaking guide</p>
+          <p class="hint">Reads the slide JSON and writes a slide-by-slide presenter script in two formats: <code>&lt;name&gt;-speaker-notes.md</code> and a styled Word <code>.docx</code> using the chosen design's palette + fonts.</p>
+        </span>
+      </label>
+      <button id="pptxGo" type="button">Generate PowerPoint</button>
+      <div class="status" id="pptxStatus"></div>
+    </div>
+
+    <div class="studio-card anki">
+      <span class="kicker">Anki Flashcards</span>
+      <h2>Generate a flashcard deck</h2>
+      <p class="sub">
+        The agent reads the base and authors atomic
+        question/answer cards (grounded in the pages, source slugs cited),
+        then Python packages them as a real <code>.apkg</code> for direct
+        import into Anki desktop or mobile. Regenerating the same deck
+        <em>updates</em> it in Anki instead of duplicating. Output lands in
+        <code>wiki/training/studio/anki/</code>.
+      </p>
+      <div class="field">
+        <label for="ankiPrompt">What should the deck teach?</label>
+        <textarea id="ankiPrompt" placeholder="e.g. the agent-architecture concepts, or everything"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="ankiCards">Cards (target)</label>
+          <input id="ankiCards" type="number" min="5" max="200" value="30">
+        </div>
+      </div>
+      <button id="ankiGo" type="button">Generate deck</button>
+      <div class="status" id="ankiStatus"></div>
+    </div>
+
+    <div class="studio-card skills" style="grid-column: 1 / -1;">
+      <span class="kicker">Agent Skills</span>
+      <h2>Compile an agent skill library</h2>
+      <p class="sub">
+        The agent reads the selected base and emits
+        one <code>SKILL.md</code> per procedure or runbook in this repo's
+        house skill format (trigger-rich description, workflow with the
+        why, gotchas, references back to the base), plus a library
+        <code>README.md</code> and an <code>agents.md</code> context file.
+        Works best on a <strong>SOPs to Skills</strong> base (drop your
+        ops docs on the Convert page first). Output lands in
+        <code>wiki/training/studio/skills/&lt;base&gt;/</code>. Copy the
+        <code>.claude/</code> folder into any repo to install.
+      </p>
+      <div class="field">
+        <label for="skillsPrompt">Which procedures should become skills?</label>
+        <textarea id="skillsPrompt" placeholder="e.g. everything, or just the client-facing procedures"></textarea>
+      </div>
+      <button id="skillsGo" type="button">Compile skills</button>
+      <div class="status" id="skillsStatus"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== DESIGN EDITOR MODAL ===== -->
+<div class="modal-backdrop" id="designModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="designModalTitle" aria-hidden="true">
+  <div class="modal">
+    <h2 id="designModalTitle">Edit design</h2>
+    <p class="sub-modal" id="designModalSub">Customise the palette and typography. Saved as a custom override; you can reset to the shipped default at any time.</p>
+
+    <div class="live-swatches" id="designLiveSwatches" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="modal-section-title">Identity</div>
+    <div class="field">
+      <label class="field-label" for="dmId">ID (lowercase, used as filename)</label>
+      <input id="dmId" type="text" maxlength="64" placeholder="my-design">
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label class="field-label" for="dmName">Name</label>
+        <input id="dmName" type="text" maxlength="80" placeholder="My Design">
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmDescription">Description</label>
+        <input id="dmDescription" type="text" maxlength="200" placeholder="One short sentence">
+      </div>
+    </div>
+
+    <div class="modal-section-title">Colours</div>
+    <div class="grid-2">
+      <div class="field">
+        <label class="field-label" for="dmColorPrimary">primary: main accent</label>
+        <div class="colour-pair">
+          <input id="dmColorPrimaryPicker" type="color" value="#46c98b" aria-label="primary colour picker">
+          <input id="dmColorPrimary" type="text" maxlength="7" value="#46c98b">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmColorSecondary">secondary: alt accent</label>
+        <div class="colour-pair">
+          <input id="dmColorSecondaryPicker" type="color" value="#6c7278" aria-label="secondary colour picker">
+          <input id="dmColorSecondary" type="text" maxlength="7" value="#6c7278">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmColorSuccess">success: green / live</label>
+        <div class="colour-pair">
+          <input id="dmColorSuccessPicker" type="color" value="#46c98b" aria-label="success colour picker">
+          <input id="dmColorSuccess" type="text" maxlength="7" value="#46c98b">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmColorHighlight">highlight: emphasis</label>
+        <div class="colour-pair">
+          <input id="dmColorHighlightPicker" type="color" value="#ffd93d" aria-label="highlight colour picker">
+          <input id="dmColorHighlight" type="text" maxlength="7" value="#ffd93d">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmColorBackground">background: cover / section</label>
+        <div class="colour-pair">
+          <input id="dmColorBackgroundPicker" type="color" value="#0a0d12" aria-label="background colour picker">
+          <input id="dmColorBackground" type="text" maxlength="7" value="#0a0d12">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmColorSurface">surface: content slides</label>
+        <div class="colour-pair">
+          <input id="dmColorSurfacePicker" type="color" value="#fafaff" aria-label="surface colour picker">
+          <input id="dmColorSurface" type="text" maxlength="7" value="#fafaff">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmColorFoundation">foundation: dark text</label>
+        <div class="colour-pair">
+          <input id="dmColorFoundationPicker" type="color" value="#0f1729" aria-label="foundation colour picker">
+          <input id="dmColorFoundation" type="text" maxlength="7" value="#0f1729">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmColorTextMuted">text-muted: captions</label>
+        <div class="colour-pair">
+          <input id="dmColorTextMutedPicker" type="color" value="#9aa3b5" aria-label="text-muted colour picker">
+          <input id="dmColorTextMuted" type="text" maxlength="7" value="#9aa3b5">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-section-title">Typography</div>
+    <p class="sub-modal" style="margin-top:-4px;">
+      These fonts style generated artifacts, not the Studio interface. New designs
+      start from the Riverfed pair: Inter for display and body, JetBrains Mono
+      for metadata. Alternate designs may use their own identity. PowerPoint
+      silently substitutes fonts that are not installed on the viewer's machine.
+    </p>
+    <datalist id="commonFonts">
+      <option value="Inter"></option>
+      <option value="JetBrains Mono"></option>
+      <option value="Aptos Display"></option>
+      <option value="Aptos"></option>
+      <option value="Public Sans"></option>
+      <option value="Space Grotesk"></option>
+      <option value="Sora"></option>
+      <option value="Calibri"></option>
+      <option value="Calibri Light"></option>
+      <option value="Arial"></option>
+      <option value="Helvetica Neue"></option>
+      <option value="Consolas"></option>
+    </datalist>
+    <div class="grid-3">
+      <div class="field">
+        <label class="field-label" for="dmFontDisplay">Display (H1 / headlines)</label>
+        <input id="dmFontDisplay" type="text" list="commonFonts" placeholder="Inter">
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmFontBody">Body (paragraphs)</label>
+        <input id="dmFontBody" type="text" list="commonFonts" placeholder="Inter">
+      </div>
+      <div class="field">
+        <label class="field-label" for="dmFontMono">Mono (eyebrow / cite)</label>
+        <input id="dmFontMono" type="text" list="commonFonts" placeholder="JetBrains Mono">
+      </div>
+    </div>
+
+    <div class="error-msg" id="dmError" role="alert" aria-live="polite"></div>
+
+    <div class="modal-footer">
+      <button type="button" class="danger grow" id="dmResetBtn" style="text-align: left; padding-left: 12px; padding-right: 12px;">↺ Reset to shipped default</button>
+      <button type="button" id="dmCancelBtn">Cancel</button>
+      <button type="button" class="primary" id="dmSaveBtn">Save design</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Riverfed Studio · runs on your local agent subscription: Claude Code or Codex
+</footer>
+
+<script>
+  const wikiSelect   = document.getElementById('wikiSelect');
+  const wikiStats    = document.getElementById('wikiStats');
+  const marpGo       = document.getElementById('marpGo');
+  const marpStatus   = document.getElementById('marpStatus');
+  const diagramGo    = document.getElementById('diagramGo');
+  const diagramStatus= document.getElementById('diagramStatus');
+  let wikisMap = {};
+
+  function setStatus(el, cls, html) {
+    el.className = 'status show ' + cls;
+    el.innerHTML = normalizeCopy(html);
+  }
+  function clearStatus(el) { el.className = 'status'; el.innerHTML = ''; }
+
+  async function loadWikis() {
+    try {
+      const r = await fetch('/wikis');
+      const j = await r.json();
+      const list = j.wikis || [];
+      wikiSelect.innerHTML = '';
+      if (list.length === 0) {
+        wikiSelect.innerHTML = '<option value="">No knowledge bases found</option>';
+        wikiStats.textContent = '';
+        return;
+      }
+      list.forEach((w, i) => {
+        wikisMap[w.slug] = w;
+        const opt = document.createElement('option');
+        opt.value = w.slug;
+        opt.textContent = `${w.name} (${w.path}/)`;
+        if (i === 0) opt.selected = true;
+        wikiSelect.appendChild(opt);
+      });
+      renderStats();
+    } catch (e) {
+      wikiSelect.innerHTML = '<option value="">Error loading knowledge bases</option>';
+      wikiStats.textContent = '';
+    }
+  }
+  function renderStats() {
+    const w = wikisMap[wikiSelect.value];
+    if (!w) { wikiStats.textContent = ''; return; }
+    const c = w.counts;
+    wikiStats.innerHTML =
+      `<span><b>${c.sources}</b> sources</span>` +
+      `<span><b>${c.topics}</b> topics</span>` +
+      `<span><b>${c.entities}</b> entities</span>` +
+      `<span><b>${c.concepts}</b> concepts</span>`;
+  }
+  wikiSelect.addEventListener('change', renderStats);
+
+  // ============================================================
+  // Design picker: dynamic load + edit modal
+  // ============================================================
+  let selectedDesignId = 'riverfed';
+  let designsById = {};
+  const designGrid = document.getElementById('designGrid');
+
+  function normalizeCopy(s) {
+    return String(s ?? '')
+      .replace(/\s*\u2014\s*/g, ', ')
+      .replace(/\s*\u00e2\u20ac\u201d\s*/g, ', ')
+      .replace(/&(?:#0*8212|#x0*2014|mdash);/gi, ', ');
+  }
+
+  function escapeHtml(s) {
+    return normalizeCopy(s).replace(/[&<>"']/g, c =>
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function clamp(s, n) {
+    s = String(s || '');
+    if (s.length <= n) return s;
+    return s.slice(0, n - 1).trim() + '…';
+  }
+
+  async function loadDesigns() {
+    try {
+      const r = await fetch('/api/designs');
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || 'failed');
+      designsById = {};
+      for (const d of j.designs) designsById[d.id] = d;
+      renderDesignTiles(j.designs);
+      // Restore previous selection if it still exists; else default to first
+      let target = null;
+      try {
+        const saved = localStorage.getItem('studio:designId');
+        if (saved && designsById[saved]) target = saved;
+      } catch (e) {}
+      if (!target) {
+        target = designsById['riverfed']
+          ? 'riverfed'
+          : ((j.designs[0] && j.designs[0].id) || 'riverfed');
+      }
+      selectDesign(target);
+    } catch (e) {
+      designGrid.innerHTML =
+        `<div class="design-tile-placeholder">Failed to load designs: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  function renderDesignTiles(list) {
+    const tiles = list.map(d => {
+      const fontHint = [...new Set([d.fonts.display, d.fonts.body, d.fonts.mono]
+        .filter(Boolean))].join(' · ').toUpperCase();
+      const swatches = (d.swatches || []).filter(Boolean)
+        .map(c => `<span style="background:${escapeHtml(c)}"></span>`).join('');
+      const badge = d.overrides_shipped
+        ? `<span class="badge custom" title="Custom override of a shipped preset">EDITED</span>`
+        : (d.source === 'custom'
+            ? `<span class="badge custom" title="Created by you">CUSTOM</span>`
+            : '');
+      const resetBtn = (d.source === 'custom')
+        ? `<button class="danger" title="${d.overrides_shipped ? 'Reset to shipped default' : 'Delete this custom design'}" data-action="reset" data-design-id="${d.id}">${d.overrides_shipped ? '↺' : '🗑'}</button>`
+        : '';
+      return `
+        <div class="design-tile ${d.id === selectedDesignId ? 'selected' : ''}"
+             data-design-id="${escapeHtml(d.id)}" role="radio"
+             aria-checked="${d.id === selectedDesignId ? 'true' : 'false'}"
+             tabindex="0">
+          <div class="actions">
+            <button title="Edit this design" data-action="edit" data-design-id="${d.id}">✎</button>
+            ${resetBtn}
+          </div>
+          <div class="name">
+            <span class="radio"></span>
+            <span>${escapeHtml(d.name)}</span>
+            ${badge}
+          </div>
+          <div class="swatches" aria-hidden="true">${swatches}</div>
+          <p class="desc">${escapeHtml(clamp(d.description, 140))}</p>
+          <p class="font-hint">${escapeHtml(fontHint)}</p>
+        </div>`;
+    }).join('');
+    const newTile = `
+      <div class="design-tile new-tile" data-action="create" tabindex="0" role="button"
+           aria-label="Create a new design">
+        <div>
+          <div class="plus">+</div>
+          <div>Create new design</div>
+        </div>
+      </div>`;
+    designGrid.innerHTML = tiles + newTile;
+    bindTileEvents();
+  }
+
+  function bindTileEvents() {
+    for (const tile of designGrid.querySelectorAll('.design-tile')) {
+      const id = tile.dataset.designId;
+      // Action buttons (edit / reset / delete): stop propagation
+      for (const btn of tile.querySelectorAll('.actions button')) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const action = btn.dataset.action;
+          if (action === 'edit') openEditor(btn.dataset.designId, false);
+          if (action === 'reset') resetDesign(btn.dataset.designId);
+        });
+      }
+      // New tile
+      if (tile.dataset.action === 'create') {
+        const open = () => openEditor(null, true);
+        tile.addEventListener('click', open);
+        tile.addEventListener('keydown', (e) => {
+          if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); open(); }
+        });
+        continue;
+      }
+      // Selection (click outside the action buttons)
+      tile.addEventListener('click', () => selectDesign(id));
+      tile.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          selectDesign(id);
+        }
+      });
+    }
+  }
+
+  function selectDesign(id) {
+    if (!designsById[id]) return;
+    selectedDesignId = id;
+    for (const tile of designGrid.querySelectorAll('.design-tile')) {
+      if (!tile.dataset.designId) continue;
+      const chosen = tile.dataset.designId === id;
+      tile.classList.toggle('selected', chosen);
+      tile.setAttribute('aria-checked', chosen ? 'true' : 'false');
+    }
+    try { localStorage.setItem('studio:designId', id); } catch (e) {}
+  }
+
+  async function resetDesign(id) {
+    const d = designsById[id];
+    if (!d) return;
+    const msg = d.overrides_shipped
+      ? `Reset "${d.name}" to the shipped default? Your edits will be removed.`
+      : `Delete the custom design "${d.name}"? This cannot be undone.`;
+    if (!confirm(msg)) return;
+    try {
+      const r = await fetch(`/api/designs/${encodeURIComponent(id)}`,
+                            { method: 'DELETE' });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || 'failed');
+      await loadDesigns();
+    } catch (e) {
+      alert('Reset failed: ' + e.message);
+    }
+  }
+
+  // ===== Editor modal =====
+  const modal = document.getElementById('designModalBackdrop');
+  const dm = {
+    id: document.getElementById('dmId'),
+    name: document.getElementById('dmName'),
+    description: document.getElementById('dmDescription'),
+    primary: document.getElementById('dmColorPrimary'),
+    secondary: document.getElementById('dmColorSecondary'),
+    success: document.getElementById('dmColorSuccess'),
+    highlight: document.getElementById('dmColorHighlight'),
+    background: document.getElementById('dmColorBackground'),
+    surface: document.getElementById('dmColorSurface'),
+    foundation: document.getElementById('dmColorFoundation'),
+    textMuted: document.getElementById('dmColorTextMuted'),
+    fontDisplay: document.getElementById('dmFontDisplay'),
+    fontBody: document.getElementById('dmFontBody'),
+    fontMono: document.getElementById('dmFontMono'),
+    error: document.getElementById('dmError'),
+    title: document.getElementById('designModalTitle'),
+    sub: document.getElementById('designModalSub'),
+    resetBtn: document.getElementById('dmResetBtn'),
+    swatches: document.getElementById('designLiveSwatches'),
+  };
+  const colourFields = ['primary','secondary','success','highlight','background',
+                        'surface','foundation','textMuted'];
+  // Bind colour picker ↔ hex input pairs
+  for (const key of colourFields) {
+    const text = dm[key];
+    const picker = document.getElementById(text.id + 'Picker');
+    picker.addEventListener('input', () => { text.value = picker.value; updateLiveSwatches(); });
+    text.addEventListener('input', () => {
+      const v = text.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { picker.value = v; }
+      updateLiveSwatches();
+    });
+  }
+  function updateLiveSwatches() {
+    const cols = [dm.primary, dm.secondary, dm.success, dm.background, dm.surface]
+      .map(el => el.value);
+    const spans = dm.swatches.children;
+    for (let i = 0; i < cols.length && i < spans.length; i++) {
+      spans[i].style.background = cols[i];
+    }
+  }
+
+  let editorMode = 'edit';      // 'edit' or 'create'
+  let editorOriginalId = null;  // id we were opened on (for create-from-existing flows)
+
+  async function openEditor(id, isCreate) {
+    dm.error.textContent = '';
+    if (isCreate || !id) {
+      editorMode = 'create';
+      editorOriginalId = null;
+      dm.title.textContent = 'Create new design';
+      dm.sub.textContent = 'Starts from the currently selected design. Saved as designs/custom/<id>.md.';
+      dm.id.disabled = false;
+      dm.resetBtn.style.display = 'none';
+      // Seed from the currently selected design
+      const base = designsById[selectedDesignId] || designsById['riverfed'];
+      try {
+        const r = await fetch(`/api/designs/${encodeURIComponent(base.id)}`);
+        const j = await r.json();
+        if (j.success) fillEditor(j.design, '');  // blank id field: user fills
+      } catch (e) {}
+    } else {
+      editorMode = 'edit';
+      editorOriginalId = id;
+      const d = designsById[id];
+      dm.title.textContent = `Edit "${d.name}"`;
+      dm.sub.textContent = d.source === 'custom'
+        ? 'Editing your custom design. Saved in place.'
+        : 'Saving creates designs/custom/' + d.id + '.md, overriding the shipped preset until you reset.';
+      dm.id.disabled = true;
+      dm.resetBtn.style.display = d.overrides_shipped || d.source === 'custom' ? '' : 'none';
+      try {
+        const r = await fetch(`/api/designs/${encodeURIComponent(id)}`);
+        const j = await r.json();
+        if (j.success) fillEditor(j.design, j.design.id);
+      } catch (e) {}
+    }
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(() => dm.name.focus(), 80);
+  }
+
+  function fillEditor(d, id) {
+    dm.id.value = id || '';
+    dm.name.value = d.name || '';
+    dm.description.value = d.description || '';
+    const c = d.colors || {};
+    const setColour = (key, fb) => {
+      const v = (c[key] || fb).replace(/^([0-9a-fA-F]{6})$/, '#$1');
+      dm[key].value = v;
+      const picker = document.getElementById(dm[key].id + 'Picker');
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) picker.value = v;
+    };
+    // House palette: a new design starts on-brand and slop-compliant.
+    // Never seed blue+purple: design.md forbids that pairing.
+    setColour('primary',    '#46c98b');
+    setColour('secondary',  '#6c7278');
+    setColour('success',    '#1d9e66');
+    setColour('highlight',  '#ffd93d');
+    setColour('background', '#0a0d12');
+    setColour('surface',    '#fafaff');
+    setColour('foundation', '#0f1729');
+    // text-muted lives under dm.textMuted but the design.md key is hyphenated
+    const tmv = (c['text-muted'] || '#9aa3b5').replace(/^([0-9a-fA-F]{6})$/, '#$1');
+    dm.textMuted.value = tmv;
+    const tmPicker = document.getElementById(dm.textMuted.id + 'Picker');
+    if (/^#[0-9a-fA-F]{6}$/.test(tmv)) tmPicker.value = tmv;
+    // Fonts
+    const t = d.typography || {};
+    dm.fontDisplay.value = (t['h1'] && t['h1'].fontFamily) || 'Inter';
+    dm.fontBody.value    = (t['body-md'] && t['body-md'].fontFamily) || 'Inter';
+    dm.fontMono.value    = (t['eyebrow'] && t['eyebrow'].fontFamily) || 'JetBrains Mono';
+    updateLiveSwatches();
+  }
+
+  function closeEditor() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+  document.getElementById('dmCancelBtn').addEventListener('click', closeEditor);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeEditor(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeEditor();
+  });
+
+  document.getElementById('dmSaveBtn').addEventListener('click', async () => {
+    const id = (dm.id.value || '').trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(id)) {
+      dm.error.textContent = 'ID must be lowercase letters/numbers/dashes only (e.g. "my-design").';
+      return;
+    }
+    if (!dm.name.value.trim()) {
+      dm.error.textContent = 'Name is required.';
+      return;
+    }
+    for (const key of colourFields) {
+      const v = dm[key].value.trim();
+      if (!/^#[0-9a-fA-F]{6}$/.test(v)) {
+        dm.error.textContent = `Colour "${key}" must be a 6-digit hex like #46c98b.`;
+        return;
+      }
+    }
+    if (editorMode === 'create' && designsById[id] && !confirm(
+        `A design with id "${id}" already exists. Save will OVERWRITE it. Proceed?`)) {
+      return;
+    }
+    const payload = {
+      name: dm.name.value.trim(),
+      description: dm.description.value.trim(),
+      colors: {
+        primary:    dm.primary.value.trim(),
+        secondary:  dm.secondary.value.trim(),
+        success:    dm.success.value.trim(),
+        highlight:  dm.highlight.value.trim(),
+        background: dm.background.value.trim(),
+        surface:    dm.surface.value.trim(),
+        foundation: dm.foundation.value.trim(),
+        "text-muted": dm.textMuted.value.trim(),
+      },
+      typography: {
+        "h1":       { fontFamily: dm.fontDisplay.value.trim() || 'Inter' },
+        "body-md":  { fontFamily: dm.fontBody.value.trim()    || 'Inter' },
+        "eyebrow":  { fontFamily: dm.fontMono.value.trim()    || 'JetBrains Mono' },
+      },
+    };
+    try {
+      const r = await fetch(`/api/designs/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.error || 'save failed');
+      closeEditor();
+      await loadDesigns();
+      selectDesign(id);
+    } catch (e) {
+      dm.error.textContent = 'Save failed: ' + e.message;
+    }
+  });
+
+  document.getElementById('dmResetBtn').addEventListener('click', async () => {
+    if (!editorOriginalId) return;
+    closeEditor();
+    await resetDesign(editorOriginalId);
+  });
+
+  loadDesigns();
+
+  // ── Job-queue polling helper ──────────────────────────────────────────────
+  // Submit a fetch (fetchFn), get back {job_id} or an immediate error.
+  // Then poll GET /jobs/<id> every 2 s until state is done|error (up to maxWait s).
+  // Calls onProgress(job) on each tick. Returns the final job object.
+  async function pollJob({ fetchFn, onProgress, maxWait = 900 }) {
+    // Submit
+    let submitRes;
+    try {
+      const r = await fetchFn();
+      submitRes = await r.json();
+    } catch (e) {
+      throw new Error(`Could not reach the server (${e.message})`);
+    }
+    // Immediate validation error (no job_id): treat like old API error
+    if (!submitRes.success || !submitRes.job_id) {
+      const err = submitRes.error || 'Unknown error';
+      throw Object.assign(new Error(err), { immediate: true });
+    }
+    const jobId = submitRes.job_id;
+    const interval = 2000;
+    const maxTries = Math.ceil((maxWait * 1000) / interval);
+    // Poll until terminal state
+    for (let i = 0; i < maxTries; i++) {
+      await new Promise(r => setTimeout(r, interval));
+      let pollRes;
+      try {
+        const r = await fetch(`/jobs/${jobId}`, { cache: 'no-store' });
+        pollRes = await r.json();
+      } catch (e) {
+        // Transient network blip: keep polling
+        continue;
+      }
+      if (!pollRes.success) throw new Error(pollRes.error || 'Job lookup failed');
+      const job = pollRes.job;
+      if (onProgress) onProgress(job);
+      if (job.state === 'done' || job.state === 'error') return job;
+    }
+    throw new Error(`Job timed out after ${maxWait}s`);
+  }
+
+  async function generate(route, body, btn, statusEl, kindName) {
+    const wiki = wikiSelect.value;
+    if (!wiki) { setStatus(statusEl, 'err', 'Pick a wiki first.'); return; }
+    if (!body.prompt) { setStatus(statusEl, 'err', 'Enter a prompt first.'); return; }
+    btn.disabled = true;
+    const guideHint = body.with_guide ? ' (+ speaking guide)' : '';
+    // Same agent choice as the converter page (the Agent selector on /):
+    // auto = Claude Code if ready, else Codex.
+    const provider = localStorage.getItem('pa-agent') || 'auto';
+    const baseMsg = `Generating ${kindName}${guideHint}… The agent is working. ` +
+      `This may take ${body.with_guide ? '4–10' : '2–5'} minutes.`;
+    setStatus(statusEl, 'busy', `<span class="spinner"></span>${baseMsg}`);
+    try {
+      const job = await pollJob({
+        fetchFn: () => fetch(route, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wiki, design_id: selectedDesignId, provider, ...body }),
+        }),
+        onProgress: (job) => {
+          const tail = Array.isArray(job.log_tail) && job.log_tail.length
+            ? job.log_tail[job.log_tail.length - 1] : null;
+          const qpos = job.queue_position != null ? ` · queue position ${job.queue_position}` : '';
+          const live = tail ? ` · ${tail}` : '';
+          setStatus(statusEl, 'busy', `<span class="spinner"></span>${baseMsg}${qpos}${live}`);
+        },
+        maxWait: 900,
+      });
+      const j = job.result || {};
+      if (job.state !== 'done' || !j.success) {
+        const errMsg = job.error || j.error || 'Unknown error';
+        setStatus(statusEl, 'err', '✗ ' + errMsg);
+        return;
+      }
+      let html = `✓ Wrote <code>${j.path}</code>`;
+      // For Marp decks, also show the auto-rendered HTML/PDF/PPTX
+      // if studio_marp.py produced them. Missing renders mean marp
+      // isn't installed (server log shows the install hint).
+      if (j.kind === 'marp') {
+        const renders = j.renders || {};
+        const formats = ['html', 'pdf', 'pptx'];
+        const lines = formats
+          .filter(f => renders[f])
+          .map(f => `<br>✓ ${f.toUpperCase()}: <code>${renders[f]}</code>`);
+        if (lines.length) {
+          html += lines.join('');
+        } else {
+          html += `. Render with <code>marp ${j.path} -o ${j.path.replace(/\.md$/, '.html')}</code>` +
+                  ` <span style="color: var(--text-muted); font-size: 12px;">(install: <code>npm i -g @marp-team/marp-cli</code> to auto-render)</span>`;
+        }
+      } else if (j.kind === 'diagram') {
+        html += `. Drag onto <a href="https://excalidraw.com" target="_blank">excalidraw.com</a> to view`;
+      } else if (j.kind === 'skills') {
+        html = `✓ Skill library at <code>${j.path}</code>`;
+        (j.skills || []).forEach(s => { html += `<br>✓ <code>${s}</code>`; });
+        html += `<br><span style="color: var(--text-muted); font-size: 12px;">Copy the <code>.claude/</code> folder into a repo to install; <code>agents.md</code> sits next to it.</span>`;
+      } else if (j.kind === 'anki') {
+        html = `✓ Anki deck: <code>${j.path}</code>. Double-click to import (or use File → Import in Anki)`;
+        const renders = j.renders || {};
+        if (renders.json) html += `<br>✓ Card spec (editable): <code>${renders.json}</code>`;
+      }
+      if (j.guide_path) {
+        const gr = j.guide_renders || {};
+        if (gr.docx || gr.md) {
+          if (gr.docx) html += `<br>✓ Speaking guide (Word): <code>${gr.docx}</code>`;
+          if (gr.md)   html += `<br>✓ Speaking guide (Markdown): <code>${gr.md}</code>`;
+        } else {
+          html += `<br>✓ Speaking guide: <code>${j.guide_path}</code>`;
+        }
+      } else if (j.guide_error) {
+        html += `<br>⚠ Guide failed: ${j.guide_error}`;
+      }
+      setStatus(statusEl, 'ok', html);
+    } catch (e) {
+      setStatus(statusEl, 'err', '✗ ' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  marpGo.addEventListener('click', () => {
+    generate('/studio/marp', {
+      prompt:     document.getElementById('marpPrompt').value.trim(),
+      slides:     parseInt(document.getElementById('marpSlides').value, 10) || 14,
+      audience:   document.getElementById('marpAudience').value.trim(),
+      with_guide: document.getElementById('marpGuide').checked,
+    }, marpGo, marpStatus, 'deck');
+  });
+
+  diagramGo.addEventListener('click', () => {
+    generate('/studio/diagram', {
+      prompt:     document.getElementById('diagramPrompt').value.trim(),
+      with_guide: document.getElementById('diagramGuide').checked,
+    }, diagramGo, diagramStatus, 'diagram');
+  });
+
+  const pptxGo = document.getElementById('pptxGo');
+  const pptxStatus = document.getElementById('pptxStatus');
+  pptxGo.addEventListener('click', () => {
+    generate('/studio/pptx', {
+      prompt:     document.getElementById('pptxPrompt').value.trim(),
+      slides:     parseInt(document.getElementById('pptxSlides').value, 10) || 12,
+      audience:   document.getElementById('pptxAudience').value.trim(),
+      with_guide: document.getElementById('pptxGuide').checked,
+    }, pptxGo, pptxStatus, 'native PowerPoint deck');
+  });
+
+  const skillsGo = document.getElementById('skillsGo');
+  const skillsStatus = document.getElementById('skillsStatus');
+  skillsGo.addEventListener('click', () => {
+    generate('/studio/skills', {
+      prompt: document.getElementById('skillsPrompt').value.trim(),
+    }, skillsGo, skillsStatus, 'skill library');
+  });
+
+  const ankiGo = document.getElementById('ankiGo');
+  const ankiStatus = document.getElementById('ankiStatus');
+  ankiGo.addEventListener('click', () => {
+    generate('/studio/anki', {
+      prompt: document.getElementById('ankiPrompt').value.trim(),
+      cards:  parseInt(document.getElementById('ankiCards').value, 10) || 30,
+    }, ankiGo, ankiStatus, 'flashcard deck');
+  });
+
+  loadWikis();
+</script>
+</body>
+</html>

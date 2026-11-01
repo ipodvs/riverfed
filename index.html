@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Riverfed: Add &amp; Ingest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+  <style>
+    :root {
+      /* Riverfed brand: "Porcelain" light theme (2026-07 redesign).
+         Sober white/grey ground; Jedi colors survive as ACCENTS only:
+         Guardian Blue = interactive, Yoda Green = success, Sith Red = errors.
+         Matches landing/index.html + landing/nav.js. */
+      --bg:           #f7f8fa;
+      --bg-elevated:  #eef1f5;   /* fields, pills, hover surfaces */
+      --bg-card:      #ffffff;
+      --foundation:   #15171c;
+      --panel:        #ffffff;    /* alias for legacy class names */
+      --panel-2:      #eef1f5;
+      --border:       #e2e5eb;
+      --border-soft:  #eaedf2;
+
+      --text:         #15171c;
+      --muted:        #5c6470;
+      --dim:          #7d8490;
+
+      /* ============ JEDI PALETTE ============
+         Same hues as wiki/training/design.md, darkened for contrast on
+         white (the deck palette stays as-is: decks are dark surfaces).
+      */
+      --accent:       #157347;   /* Jedi Green: Yoda, Luke's new blade */
+      --accent-hover: #115d3a;
+      --ok:           #1d9e66;   /* Yoda / Consular Green */
+      --err:          #d43333;   /* SITH red: errors only */
+      --voltage:      #8a6100;   /* Sentinel gold, readable on white */
+
+      /* Jedi aliases (same hex, lore-resonant names) */
+      --saber-blue:       var(--accent);
+      --saber-blue-glow:  #1f9dd9;   /* legacy alias: no glows in this theme */
+      --saber-green:      var(--ok);
+      --saber-red:        var(--err);
+      --cream:            #f5f0e6;   /* Jedi robes: warm cream */
+
+      /* Legacy gradient tokens, now SOLID: one accent, zero gradients.
+         Kept as tokens so var(--grad-cta) call sites keep working. */
+      --grad:         #157347;
+      --grad-cta:     #157347;
+      --grad-cta-hover: #115d3a;
+      --grad-soft:    rgba(21, 115, 71,0.08);
+
+      --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+      --mono:         var(--font-mono);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 0 0 80px;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Top navigation is injected by /nav.js (single source of truth).
+       No ambient decoration: hierarchy comes from surfaces + hairlines. */
+
+    .wrap { max-width: 720px; margin: 56px auto 0; }
+
+    /* === PAGE HEADER === */
+    .eyebrow {
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 14px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      color: var(--text);
+      text-wrap: balance;
+    }
+    h1 .grad { color: var(--accent); }
+    .sub { color: var(--muted); margin: 0 0 40px; font-size: 15px; line-height: 1.6; max-width: 58ch; }
+    .sub code { background: var(--bg-elevated); padding: 2px 6px; border-radius: 6px; font-size: 12px; font-family: var(--mono); color: var(--text); }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 28px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(21,23,28,0.03);
+    }
+
+    .row { display: flex; gap: 10px; }
+
+    /* Fused input + button unit for the main converter row */
+    .row.convert {
+      gap: 8px;
+      padding: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .row.convert:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(21, 115, 71,0.12);
+    }
+    .row.convert input[type="url"] {
+      border: none; background: transparent;
+      padding: 10px 18px;
+    }
+    .row.convert input[type="url"]:focus { box-shadow: none; }
+    .row.convert button { border-radius: 7px; padding: 10px 24px; }
+
+    input[type="url"] {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--bg-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input[type="url"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(21, 115, 71,0.18);
+    }
+    input[type="url"]::placeholder { color: var(--dim); }
+
+    button {
+      padding: 11px 22px;
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: -0.005em;
+      transition: background 0.15s ease;
+    }
+    button:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+    button:disabled {
+      background: var(--bg-elevated);
+      color: var(--dim);
+      cursor: not-allowed;
+      box-shadow: none;
+      border: 1px solid var(--border);
+    }
+
+    .drop {
+      border: 1.5px dashed #d5d9e0;
+      border-radius: 10px;
+      padding: 52px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.15s ease;
+      background: var(--bg);
+    }
+    .drop:hover { border-color: var(--accent); color: var(--text); background: rgba(21, 115, 71,0.04); }
+    .drop.over { border-color: var(--accent); background: rgba(21, 115, 71, 0.10); color: var(--accent); }
+    .drop strong { color: var(--text); font-weight: 600; }
+    .drop .types-hint {
+      display: block; margin-top: 6px;
+      font-size: 12px; opacity: 0.65;
+      font-family: var(--mono);
+    }
+
+    .status { margin-top: 12px; padding: 14px 18px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+    .status.info { background: rgba(21, 115, 71, 0.08); border: 1px solid rgba(21, 115, 71, 0.30); color: var(--accent); }
+    .status.ok   { background: rgba(29, 158, 102, 0.07); border: 1px solid rgba(29, 158, 102, 0.30); color: var(--ok); }
+    .status.err  { background: rgba(212, 51, 51, 0.06); border: 1px solid rgba(212, 51, 51, 0.30); color: var(--err); }
+    .status.warn { background: rgba(138, 97, 0, 0.07); border: 1px solid rgba(138, 97, 0, 0.30); color: var(--voltage); }
+    .status.warn button { margin-top: 10px; font-size: 12px; padding: 6px 12px; }
+    .status code { background: rgba(21, 23, 28, 0.05); padding: 1px 6px; border-radius: 3px; font-size: 12px; word-break: break-all; font-family: var(--mono); }
+    .status pre  { margin: 6px 0 0; font-size: 11px; white-space: pre-wrap; word-break: break-all; opacity: 0.85; font-family: var(--mono); }
+    .status a    { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+    .recent { margin-top: 48px; }
+    .recent h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--dim);
+      margin: 0 0 14px;
+      font-weight: 600;
+      font-family: var(--mono);
+    }
+
+    .file {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      transition: border-color 0.15s ease;
+    }
+    .file:hover { border-color: #cdd2da; }
+    .file a { color: var(--text); text-decoration: none; word-break: break-all; font-weight: 500; }
+    .file a:hover { color: var(--accent); }
+    .file .meta { color: var(--muted); font-size: 11px; margin-left: 12px; white-space: nowrap; font-family: var(--mono); }
+
+    .health {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--dim);
+      vertical-align: 5px;
+      margin-left: 10px;
+      transition: background 0.2s, box-shadow 0.2s;
+      font-size: 0;
+    }
+    .health.up   { background: var(--ok); }
+    .health.down { background: var(--err); }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(21, 23, 28, 0.12);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: -1px;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* The wiki/ingest row inside the Wiki section */
+    .wiki-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+      padding: 20px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 1px 2px rgba(21,23,28,0.03);
+    }
+    .wiki-row .pending {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px; color: var(--muted);
+      line-height: 1.5;
+    }
+    .wiki-row .pending strong { color: var(--text); }
+    .wiki-row .pending code { font-family: var(--mono); color: var(--accent); }
+    .source-queue {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .source-item {
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .source-item:first-child { border-top: 0; padding-top: 0; }
+    .source-line {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+    .source-line a {
+      color: var(--text);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .source-line a:hover { text-decoration: underline; }
+    .source-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .source-badge.ready { color: var(--ok); }
+    .source-badge.blocked { color: var(--err); }
+    .source-detail {
+      margin-top: 3px;
+      color: var(--dim);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+    .source-problem {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      max-width: 72ch;
+    }
+    .source-retry {
+      margin-top: 7px;
+      padding: 6px 10px;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid rgba(21, 115, 71, 0.35);
+      font-size: 11px;
+    }
+
+    /* ── Knowledge-base (vault) selector ─────────────────────────────── */
+    .vault-bar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 14px 18px; margin-bottom: 16px;
+      background: var(--bg-elevated);
+      border: none;
+      border-radius: 10px;
+    }
+    .vault-bar .lbl {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--dim); font-family: var(--mono);
+    }
+    .vault-bar select {
+      flex: 0 1 auto; min-width: 200px;
+      padding: 8px 34px 8px 12px;
+      background: var(--bg-elevated, #11141b);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px; font-family: inherit;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235c6470' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      cursor: pointer;
+    }
+    .vault-bar select:focus { outline: none; border-color: var(--accent); }
+    .vault-bar .vault-meta { font-size: 12px; color: var(--dim); font-family: var(--mono); }
+    .vault-bar .new-vault-btn {
+      padding: 8px 14px; font-size: 13px;
+      background: transparent; color: var(--accent);
+      border: 1px solid rgba(21, 115, 71,0.35);
+    }
+    .vault-bar .new-vault-btn:hover:not(:disabled) { background: rgba(21, 115, 71,0.08); }
+    .vault-create { display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .vault-create.open { display: flex; }
+    .vault-create input {
+      padding: 8px 12px; min-width: 220px;
+      background: var(--bg-elevated, #11141b);
+      color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-family: inherit;
+    }
+    .vault-create input:focus { outline: none; border-color: var(--accent); }
+    .vault-create select {
+      padding: 8px 30px 8px 12px;
+      background: var(--bg-elevated, #11141b);
+      color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-family: inherit;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235c6470' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+      cursor: pointer;
+    }
+    .vault-create select:focus { outline: none; border-color: var(--accent); }
+    .vault-create .model-edit-btn {
+      padding: 8px 10px; font-size: 12px;
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .vault-create .model-edit-btn:hover:not(:disabled) { color: var(--accent); border-color: rgba(21, 115, 71,0.35); }
+    .model-desc {
+      display: none; margin: -6px 0 14px; padding: 0 16px;
+      font-size: 12px; color: var(--dim); line-height: 1.5;
+    }
+    .model-desc.open { display: block; }
+
+    /* ── Knowledge-model editor modal ────────────────────────────────── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 60;
+      background: rgba(21,23,28,0.45); backdrop-filter: blur(3px);
+      align-items: flex-start; justify-content: center;
+      overflow-y: auto; padding: 5vh 16px 6vh;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: min(760px, 100%);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 20px 48px rgba(21,23,28,0.18);
+    }
+    .modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+    }
+    .modal-head h3 { margin: 0; font-size: 15px; }
+    .modal-head .close-x {
+      background: transparent; border: none; color: var(--muted);
+      font-size: 20px; line-height: 1; cursor: pointer; padding: 2px 6px;
+    }
+    .modal-head .close-x:hover { color: var(--text); }
+    .modal-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+    .modal-body .form-row { display: flex; flex-direction: column; gap: 5px; }
+    .modal-body label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--dim); font-family: var(--mono);
+    }
+    .modal-body input[type="text"], .modal-body textarea {
+      padding: 8px 12px;
+      background: var(--bg-elevated, #11141b); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-family: inherit;
+    }
+    .modal-body textarea.mono { font-family: var(--mono); font-size: 12px; line-height: 1.5; }
+    .modal-body input:focus, .modal-body textarea:focus { outline: none; border-color: var(--accent); }
+    .modal-body .hint { font-size: 11px; color: var(--dim); }
+    .knob-grid { display: flex; gap: 14px; flex-wrap: wrap; }
+    .knob-grid .knob {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg-elevated, #11141b); font-size: 13px;
+    }
+    .knob-grid .knob input {
+      width: 54px; padding: 4px 6px; text-align: center;
+      background: var(--bg-card); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; font-family: var(--mono);
+    }
+    .modal-foot {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 18px; border-top: 1px solid var(--border);
+    }
+    .modal-foot .spacer { flex: 1; }
+    .modal-foot .m-status { font-size: 12px; color: var(--dim); }
+    .modal-foot .danger {
+      background: transparent; color: var(--err);
+      border: 1px solid rgba(212,51,51,0.35);
+    }
+    .modal-foot .danger:hover:not(:disabled) { background: rgba(212,51,51,0.06); }
+
+    ::selection { background: rgba(21, 115, 71,0.20); }
+  </style>
+</head>
+<body>
+  <div data-pa-nav></div>
+  <script>
+    (function loadSharedNav() {
+      const script = document.createElement("script");
+      script.src = location.protocol === "file:" ? "landing/nav.js" : "/nav.js";
+      script.defer = true;
+      document.head.appendChild(script);
+    }());
+  </script>
+
+  <div class="wrap" style="padding: 0 20px;">
+    <div class="eyebrow">Add &amp; Ingest</div>
+    <h1>Drop a source. <span class="grad">Compound your knowledge.</span> <span id="health" class="health" title="server status">…</span></h1>
+    <p class="sub">Paste a YouTube or article URL, or drop a file. The transcript lands in <code>output/</code>. One click later it becomes a wiki page, a topic update, and an entity entry.</p>
+
+    <div id="offline" class="status err" style="display:none; margin-bottom: 14px;">
+      <strong>Server is not reachable.</strong> Start it with <code>serve.cmd</code> from the project folder. The window must stay open while you use the page.
+    </div>
+
+    <div class="vault-bar">
+      <span class="lbl">Knowledge base</span>
+      <select id="vaultSelect" title="Conversions, pending list, ingest and review all target this knowledge base"></select>
+      <span id="vaultMeta" class="vault-meta"></span>
+      <span class="lbl" style="margin-left: 10px;">Agent</span>
+      <select id="agentSelect" title="Which agent CLI runs ingest, review, and Studio generations. Auto tries them in order (Claude Code, then Grok, then Codex) and takes the first that's ready. An explicit choice fails clearly when that CLI isn't logged in and never silently switches."></select>
+      <button id="newVaultBtn" class="new-vault-btn" type="button">+ New</button>
+      <div id="vaultCreate" class="vault-create">
+        <input id="vaultName" type="text" placeholder="Name: e.g. Investing" maxlength="48" autocomplete="off">
+        <select id="vaultModel" title="The knowledge model defines the folders, the graph, and how the ingest agent organizes content"></select>
+        <button id="modelEditBtn" class="model-edit-btn" type="button" title="Tune this model's promotion thresholds and agent prompts (saved as a custom model)">Customize…</button>
+        <button id="vaultCreateBtn" type="button">Create</button>
+        <button id="vaultCancelBtn" type="button" style="background: transparent; color: var(--muted); border: 1px solid var(--border);">Cancel</button>
+      </div>
+    </div>
+    <div id="vaultModelDesc" class="model-desc"></div>
+    <div id="vaultStatus"></div>
+
+    <!-- Knowledge-model editor: clone of the Studio design-editor idea:
+         duplicate a model, tweak its promotion knobs + agent prompts, save
+         to models/custom/<id>/ (reset = delete the custom override). -->
+    <div id="modelModal" class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-head">
+          <h3 id="modelModalTitle">Customize model</h3>
+          <button id="modelModalClose" class="close-x" type="button" title="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <label for="mId">Save as (id)</label>
+            <input id="mId" type="text" maxlength="64" autocomplete="off" spellcheck="false">
+            <span class="hint">Keep the same id to override the shipped model for every vault that uses it; change it to create a separate custom model.</span>
+          </div>
+          <div class="form-row">
+            <label for="mName">Name</label>
+            <input id="mName" type="text" maxlength="64" autocomplete="off">
+          </div>
+          <div class="form-row">
+            <label for="mDesc">Description</label>
+            <textarea id="mDesc" rows="2"></textarea>
+          </div>
+          <div class="form-row">
+            <label>Promotion thresholds</label>
+            <div id="mKnobs" class="knob-grid"></div>
+            <span class="hint">How many sources of evidence a candidate needs before the agent creates a page in that folder.</span>
+          </div>
+          <div class="form-row">
+            <label for="mIngest">Ingest prompt</label>
+            <textarea id="mIngest" rows="12" class="mono" spellcheck="false"></textarea>
+            <span class="hint">Placeholders: {wiki_rel} {output_rel} {transcript_name} {wiki_slug} + the per-folder knobs like {concept_promote_after}. Validated on save.</span>
+          </div>
+          <div class="form-row">
+            <label for="mPromote">Promotion prompt</label>
+            <textarea id="mPromote" rows="8" class="mono" spellcheck="false"></textarea>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <span id="mStatus" class="m-status"></span>
+          <span class="spacer"></span>
+          <button id="mReset" class="danger" type="button" style="display:none">Reset to shipped</button>
+          <button id="mSave" type="button">Save model</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row convert">
+        <input type="url" id="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" />
+        <button id="urlBtn">Add</button>
+      </div>
+      <label style="display: flex; align-items: center; gap: 10px; margin-top: 12px; cursor: pointer; color: var(--muted); font-size: 13px;">
+        <input id="framesToggle" type="checkbox" style="accent-color: var(--accent); width: 16px; height: 16px;">
+        <span><strong style="color: var(--text); font-weight: 600;">Also capture on-screen text.</strong>
+        YouTube only. Extracts frames + runs OCR for slides, code, dashboards.
+        Adds ~30–60s, costs nothing extra.
+        <span style="color: var(--dim);">Ingest can then read the visual context too (subscription quota: no API key needed).</span></span>
+      </label>
+      <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; margin-left: 26px; padding-left: 12px; border-left: 2px solid var(--border); cursor: pointer; color: var(--muted); font-size: 13px;">
+        <input id="denseToggle" type="checkbox" style="accent-color: var(--accent); width: 16px; height: 16px; margin-top: 2px;">
+        <span><strong style="color: var(--text); font-weight: 600;">Deep visual capture.</strong>
+        Designed for whiteboard, Excalidraw, and screen-recording videos. Samples densely (every 45s
+        across the first 20 min, hi-res) and flags <em>every</em> frame for the ingest agent to
+        read as an image, so hand-drawn diagrams and on-screen UI/code land in the wiki even when
+        OCR finds nothing.
+        <span style="color: var(--dim);">Spends more ingest tokens, but worth it when the visuals carry information the narration skips. Turns on capture above automatically.</span></span>
+      </label>
+    </div>
+
+    <div class="card">
+      <div class="drop" id="drop">
+        <strong>Drop a file here</strong> &nbsp;or click to choose
+        <span class="types-hint">.pdf · .docx · .pptx · .xlsx · audio · images · .html · .epub</span>
+      </div>
+      <input type="file" id="file" style="display:none" />
+    </div>
+
+    <div id="status"></div>
+
+    <div class="recent">
+      <h2>Knowledge</h2>
+      <div id="wiki">
+        <div class="wiki-row">
+          <div id="wikiPending" class="pending">Checking pending&hellip;</div>
+          <button id="ingestBtn" disabled>Ingest ready</button>
+        </div>
+        <div id="ingestStatus"></div>
+        <div class="wiki-row" style="margin-top: 8px;">
+          <div id="reviewState" class="pending">&nbsp;</div>
+          <button id="reviewBtn" disabled title="Run promote_backlog.py: promotes accumulated 'watch for…' candidates into full concept/entity pages">Run review now</button>
+        </div>
+        <div id="reviewStatus"></div>
+      </div>
+    </div>
+
+    <div class="recent">
+      <h2>Watched channels</h2>
+      <div class="wiki-row" style="flex-direction: column; align-items: stretch; gap: 10px;">
+        <div style="font-size: 13px; color: var(--muted); line-height: 1.5;">
+          New uploads from these channels are converted into this base
+          automatically (the server sweeps a few times a day, or hit
+          <strong>Check now</strong>). Default is queue-for-approval: new
+          videos appear as <em>pending</em> for you to ingest. Flip
+          <strong>auto</strong> on a channel to ingest unattended.
+        </div>
+        <div id="watchList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+        <div id="watchHistory"></div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <input id="watchUrl" type="url" placeholder="https://www.youtube.com/@channel" autocomplete="off"
+                 style="flex: 1 1 260px; padding: 8px 12px; background: var(--bg-elevated, #11141b); color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-family: inherit;">
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer;" title="Ingest new videos unattended (uses your Claude subscription quota)">
+            <input id="watchAuto" type="checkbox" style="accent-color: var(--accent);"> auto-ingest
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer;" title="Deep visual capture on new videos (slides/whiteboard channels)">
+            <input id="watchFrames" type="checkbox" style="accent-color: var(--accent);"> deep capture
+          </label>
+          <button id="watchAddBtn" type="button">Watch</button>
+          <button id="watchCheckBtn" type="button" style="background: transparent; color: var(--accent); border: 1px solid rgba(21, 115, 71,0.35);">Check now</button>
+        </div>
+        <div id="watchStatus"></div>
+      </div>
+    </div>
+
+    <div class="recent">
+      <h2>Output folder</h2>
+      <div id="files"></div>
+    </div>
+  </div>
+
+  <script>
+    const urlInput = document.getElementById('url');
+    const urlBtn = document.getElementById('urlBtn');
+    const drop = document.getElementById('drop');
+    const fileInput = document.getElementById('file');
+    const statusBox = document.getElementById('status');
+    const filesBox = document.getElementById('files');
+    const offlineBanner = document.getElementById('offline');
+    const healthDot = document.getElementById('health');
+    const wikiPending = document.getElementById('wikiPending');
+    const ingestBtn = document.getElementById('ingestBtn');
+    const ingestStatus = document.getElementById('ingestStatus');
+    const reviewState = document.getElementById('reviewState');
+    const reviewBtn = document.getElementById('reviewBtn');
+    const reviewStatus = document.getElementById('reviewStatus');
+    const vaultSelect = document.getElementById('vaultSelect');
+    const vaultMeta = document.getElementById('vaultMeta');
+    const newVaultBtn = document.getElementById('newVaultBtn');
+    const vaultCreate = document.getElementById('vaultCreate');
+    const vaultName = document.getElementById('vaultName');
+    const vaultModel = document.getElementById('vaultModel');
+    const vaultModelDesc = document.getElementById('vaultModelDesc');
+    const modelEditBtn = document.getElementById('modelEditBtn');
+    const vaultCreateBtn = document.getElementById('vaultCreateBtn');
+    const vaultCancelBtn = document.getElementById('vaultCancelBtn');
+    const vaultStatus = document.getElementById('vaultStatus');
+    const modelModal = document.getElementById('modelModal');
+    const modelModalTitle = document.getElementById('modelModalTitle');
+    const modelModalClose = document.getElementById('modelModalClose');
+    const mId = document.getElementById('mId');
+    const mName = document.getElementById('mName');
+    const mDesc = document.getElementById('mDesc');
+    const mKnobs = document.getElementById('mKnobs');
+    const mIngest = document.getElementById('mIngest');
+    const mPromote = document.getElementById('mPromote');
+    const mStatus = document.getElementById('mStatus');
+    const mReset = document.getElementById('mReset');
+    const mSave = document.getElementById('mSave');
+
+    function setStatus(kind, html) {
+      statusBox.innerHTML = `<div class="status ${kind}">${normalizeCopy(html)}</div>`;
+    }
+
+    // ── Knowledge base (vault) selection ─────────────────────────────────────
+    // Everything on this page: convert target, pending list, ingest, review,
+    // output folder: is scoped to the selected knowledge base. The choice
+    // sticks across visits via localStorage.
+    let currentWiki = localStorage.getItem('pa-vault') || 'wiki';
+    let vaults = [];
+
+    function wikiQS() {
+      return `?wiki=${encodeURIComponent(currentWiki)}`;
+    }
+
+    // ── Agent provider selection (A6: bring your own agent) ────────────────
+    // Which agent CLI runs ingest / review / Studio generations. Shared with
+    // the Studio page via the same localStorage key. "auto" = the first ready
+    // provider in the server's own order (Claude Code, Grok, Codex; resolved
+    // server-side); explicit choices hard-fail with a login hint when that CLI
+    // isn't ready. The option list is built from /pending, so a provider added
+    // server-side appears here with no change to this file.
+    const agentSelect = document.getElementById('agentSelect');
+    let agentPref = localStorage.getItem('pa-agent') || 'auto';
+    let lastAgentAuth = null;   // latest agent_auth payload off /pending
+
+    function providerQS() {
+      return `&provider=${encodeURIComponent(agentPref)}`;
+    }
+
+    function agentReady() {
+      if (!lastAgentAuth) return false;
+      if (agentPref === 'auto') return !!lastAgentAuth.auto;
+      const st = (lastAgentAuth.providers || {})[agentPref];
+      return !!(st && st.ok && st.logged_in);
+    }
+
+    function renderAgentOptions() {
+      if (!agentSelect) return;
+      const provs = (lastAgentAuth && lastAgentAuth.providers) || {};
+      const auto = lastAgentAuth && lastAgentAuth.auto;
+      const label = (id) => {
+        const st = provs[id];
+        if (!st) return id;
+        const ready = st.ok && st.logged_in;
+        return `${st.display_name}${ready ? '' : ': not ready'}`;
+      };
+      const autoLabel = auto && provs[auto]
+        ? `Auto (${provs[auto].display_name})` : 'Auto (none ready)';
+      const opts = [['auto', autoLabel]];
+      for (const id of Object.keys(provs)) opts.push([id, label(id)]);
+      agentSelect.innerHTML = opts.map(([v, l]) =>
+        `<option value="${escapeHtml(v)}"${v === agentPref ? ' selected' : ''}>${escapeHtml(l)}</option>`
+      ).join('');
+    }
+
+    if (agentSelect) {
+      agentSelect.addEventListener('change', () => {
+        agentPref = agentSelect.value || 'auto';
+        localStorage.setItem('pa-agent', agentPref);
+        refreshPending();
+      });
+    }
+
+    function renderVaultOptions() {
+      vaultSelect.innerHTML = vaults.map(v =>
+        `<option value="${escapeHtml(v.slug)}"${v.slug === currentWiki ? ' selected' : ''}>${escapeHtml(v.name)}</option>`
+      ).join('');
+      const v = vaults.find(x => x.slug === currentWiki);
+      // counts keys come from the vault's knowledge model (karpathy:
+      // sources/topics/entities/concepts; PARA: sources/projects/areas/…)
+      vaultMeta.textContent = v
+        ? Object.entries(v.counts || {}).map(([k, n]) => `${n} ${k}`).join(' · ')
+        : '';
+    }
+
+    async function loadVaults() {
+      try {
+        const res = await fetch('/wikis', { cache: 'no-store' });
+        const json = await res.json();
+        vaults = json.wikis || [];
+        if (!vaults.find(v => v.slug === currentWiki)) {
+          currentWiki = vaults.length ? vaults[0].slug : 'wiki';
+          localStorage.setItem('pa-vault', currentWiki);
+        }
+        renderVaultOptions();
+      } catch (_) { /* offline: banner handles it */ }
+    }
+
+    // Every panel below the picker is scoped to ONE knowledge base: staged
+    // files, pending, and the watched channels all live in that vault. Any
+    // path that changes currentWiki (picker, create) must re-fetch all of
+    // them, or the old base's data reads as if it belonged to the new one.
+    function vaultChanged() {
+      statusBox.innerHTML = '';
+      ingestStatus.innerHTML = '';
+      reviewStatus.innerHTML = '';
+      document.getElementById('watchStatus').innerHTML = '';
+      refreshFiles();
+      refreshPending();
+      loadWatcher();
+    }
+
+    vaultSelect.addEventListener('change', () => {
+      currentWiki = vaultSelect.value;
+      localStorage.setItem('pa-vault', currentWiki);
+      renderVaultOptions();
+      vaultChanged();
+    });
+
+    // ── Knowledge models (picker + editor) ──────────────────────────────────
+    // A model defines what a base IS: its folders, the graph, the promotion
+    // thresholds, and the agent prompts. Picked at create time; customizable
+    // via the modal (saved to models/custom/<id>/ through /api/models).
+    let models = [];
+
+    function renderModelOptions() {
+      const prev = vaultModel.value;
+      vaultModel.innerHTML = models.map(m =>
+        `<option value="${escapeHtml(m.id)}">${escapeHtml(m.name)}${m.source === 'custom' ? ' (custom)' : ''}</option>`
+      ).join('');
+      if (models.find(m => m.id === prev)) vaultModel.value = prev;
+      renderModelDesc();
+    }
+
+    function renderModelDesc() {
+      const m = models.find(x => x.id === vaultModel.value);
+      if (!m || !vaultCreate.classList.contains('open')) {
+        vaultModelDesc.classList.remove('open');
+        return;
+      }
+      const folders = m.folders.map(f =>
+        f.promote_after ? `${f.name} (≥${f.promote_after})` : f.name).join(' · ');
+      vaultModelDesc.innerHTML =
+        `<strong style="color: var(--muted);">${escapeHtml(m.name)}:</strong> ` +
+        `${escapeHtml(m.description)} <span style="color: var(--dim);">· ${escapeHtml(folders)}</span>`;
+      vaultModelDesc.classList.add('open');
+    }
+
+    async function loadModels() {
+      try {
+        const res = await fetch('/api/models', { cache: 'no-store' });
+        const json = await res.json();
+        if (json.success) { models = json.models || []; renderModelOptions(); }
+      } catch (_) { /* offline: banner handles it */ }
+    }
+
+    vaultModel.addEventListener('change', renderModelDesc);
+
+    newVaultBtn.addEventListener('click', () => {
+      vaultCreate.classList.add('open');
+      newVaultBtn.style.display = 'none';
+      if (!models.length) loadModels(); else renderModelDesc();
+      vaultName.focus();
+    });
+    function closeVaultCreate() {
+      vaultCreate.classList.remove('open');
+      vaultModelDesc.classList.remove('open');
+      newVaultBtn.style.display = '';
+      vaultName.value = '';
+    }
+    vaultCancelBtn.addEventListener('click', closeVaultCreate);
+    vaultName.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') vaultCreateBtn.click();
+      if (e.key === 'Escape') closeVaultCreate();
+    });
+
+    vaultCreateBtn.addEventListener('click', async () => {
+      const name = vaultName.value.trim();
+      if (!name) { vaultName.focus(); return; }
+      vaultCreateBtn.disabled = true;
+      vaultCreateBtn.textContent = 'Creating…';
+      try {
+        const res = await fetch('/wikis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, model: vaultModel.value || undefined }),
+        });
+        const json = await res.json();
+        if (!json.success) throw Object.assign(new Error(json.error || 'Could not create it'), { immediate: true });
+        currentWiki = json.wiki.slug;
+        localStorage.setItem('pa-vault', currentWiki);
+        await loadVaults();
+        closeVaultCreate();
+        const modelInfo = models.find(m => m.id === json.wiki.model);
+        const modelNote = modelInfo ? ` (${escapeHtml(modelInfo.name)} model)` : '';
+        vaultStatus.innerHTML = `<div class="status ok" style="margin-bottom: 14px;">Knowledge base <strong>${escapeHtml(json.wiki.name)}</strong>${modelNote} created at <code>${escapeHtml(json.wiki.path)}/</code>. Add a video or drop a file. It stages here and ingests into this base.</div>`;
+        vaultChanged();
+      } catch (e) {
+        const msg = e.immediate ? e.message : `Could not reach the server (${e.message})`;
+        vaultStatus.innerHTML = `<div class="status err" style="margin-bottom: 14px;">${escapeHtml(msg)}</div>`;
+      } finally {
+        vaultCreateBtn.disabled = false;
+        vaultCreateBtn.textContent = 'Create';
+      }
+    });
+
+    // ── Model editor modal ───────────────────────────────────────────────────
+    let editingModel = null;   // full payload from GET /api/models/<id>
+
+    function setModelStatus(msg, isErr) {
+      mStatus.textContent = normalizeCopy(msg);
+      mStatus.style.color = isErr ? 'var(--err)' : 'var(--dim)';
+    }
+
+    function closeModelModal() {
+      modelModal.classList.remove('open');
+      editingModel = null;
+      setModelStatus('');
+    }
+
+    modelEditBtn.addEventListener('click', async () => {
+      const id = vaultModel.value;
+      if (!id) return;
+      try {
+        const res = await fetch(`/api/models/${encodeURIComponent(id)}`, { cache: 'no-store' });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || 'load failed');
+        editingModel = json.model;
+      } catch (e) {
+        vaultStatus.innerHTML = `<div class="status err" style="margin-bottom: 14px;">Could not load model: ${escapeHtml(e.message)}</div>`;
+        return;
+      }
+      modelModalTitle.textContent = `Customize: ${editingModel.name}`;
+      mId.value = editingModel.id;
+      mName.value = editingModel.name;
+      mDesc.value = editingModel.description || '';
+      mIngest.value = editingModel.ingest_prompt || '';
+      mPromote.value = editingModel.promote_prompt || '';
+      mKnobs.innerHTML = editingModel.folders
+        .filter(f => f.promote_after !== null && f.promote_after !== undefined)
+        .map(f => `<span class="knob">${escapeHtml(f.name)} <input type="number" min="1" max="9" value="${f.promote_after}" data-folder="${escapeHtml(f.name)}"></span>`)
+        .join('') || '<span class="hint">This model has no promotion thresholds.</span>';
+      mReset.style.display = editingModel.source === 'custom' ? '' : 'none';
+      setModelStatus(editingModel.source === 'custom'
+        ? 'Editing the custom override.'
+        : 'Shipped model: saving creates a custom override.');
+      modelModal.classList.add('open');
+    });
+
+    mSave.addEventListener('click', async () => {
+      const id = mId.value.trim().toLowerCase();
+      if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(id) || id === 'custom') {
+        setModelStatus('Id must be lowercase letters/numbers/dashes.', true);
+        return;
+      }
+      if (!mName.value.trim()) { setModelStatus('Name required.', true); return; }
+      // Folders = the loaded spec with the knob inputs swapped in.
+      const folders = JSON.parse(JSON.stringify(editingModel.folders_spec || {}));
+      mKnobs.querySelectorAll('input[data-folder]').forEach(inp => {
+        const f = inp.getAttribute('data-folder');
+        const n = parseInt(inp.value, 10);
+        if (folders[f] && n >= 1) folders[f].promote_after = n;
+      });
+      mSave.disabled = true;
+      mSave.textContent = 'Saving…';
+      try {
+        const res = await fetch(`/api/models/${encodeURIComponent(id)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: mName.value.trim(),
+            description: mDesc.value.trim(),
+            base: editingModel.id,
+            folders,
+            links: editingModel.links_spec,
+            generators: editingModel.generators,
+            ingest_prompt: mIngest.value,
+            promote_prompt: mPromote.value,
+          }),
+        });
+        const json = await res.json();
+        if (!json.success) { setModelStatus(json.error || 'Save failed.', true); return; }
+        await loadModels();
+        vaultModel.value = id;
+        renderModelDesc();
+        closeModelModal();
+        vaultStatus.innerHTML = `<div class="status ok" style="margin-bottom: 14px;">Model saved to <code>${escapeHtml(json.path)}/</code>. Vaults using <strong>${escapeHtml(id)}</strong> pick it up on their next ingest.</div>`;
+      } catch (e) {
+        setModelStatus(`Could not reach the server (${e.message})`, true);
+      } finally {
+        mSave.disabled = false;
+        mSave.textContent = 'Save model';
+      }
+    });
+
+    mReset.addEventListener('click', async () => {
+      if (!editingModel) return;
+      mReset.disabled = true;
+      try {
+        const res = await fetch(`/api/models/${encodeURIComponent(editingModel.id)}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (!json.success) { setModelStatus(json.error || 'Reset failed.', true); return; }
+        await loadModels();
+        renderModelDesc();
+        closeModelModal();
+        vaultStatus.innerHTML = `<div class="status ok" style="margin-bottom: 14px;">Custom override removed${json.reset_to_default ? ': back to the shipped model' : ''}.</div>`;
+      } catch (e) {
+        setModelStatus(`Could not reach the server (${e.message})`, true);
+      } finally {
+        mReset.disabled = false;
+      }
+    });
+
+    modelModalClose.addEventListener('click', closeModelModal);
+    modelModal.addEventListener('click', (e) => { if (e.target === modelModal) closeModelModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modelModal.classList.contains('open')) closeModelModal();
+    });
+
+    function busy(state) {
+      urlBtn.disabled = state;
+      drop.style.pointerEvents = state ? 'none' : '';
+      drop.style.opacity = state ? '0.5' : '1';
+    }
+
+    async function refreshFiles() {
+      try {
+        const res = await fetch(`/files${wikiQS()}`, { cache: 'no-store' });
+        const json = await res.json();
+        offlineBanner.style.display = 'none';
+        if (!json.files || !json.files.length) {
+          filesBox.innerHTML = '<div style="color: var(--muted); font-size: 13px;">No files yet.</div>';
+          return;
+        }
+        filesBox.innerHTML = json.files.map(f => `
+          <div class="file">
+            <a href="/files/${encodeURIComponent(f.name)}${wikiQS()}" target="_blank">${f.name}</a>
+            <span class="meta">${formatSize(f.size)} · ${f.modified}</span>
+          </div>
+        `).join('');
+      } catch (e) {
+        offlineBanner.style.display = 'block';
+        filesBox.innerHTML = '<div style="color: var(--muted); font-size: 13px;">(server not reachable)</div>';
+      }
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    }
+
+    function normalizeCopy(s) {
+      return String(s ?? '')
+        .replace(/\s*\u2014\s*/g, ', ')
+        .replace(/\s*\u00e2\u20ac\u201d\s*/g, ', ')
+        .replace(/&(?:#0*8212|#x0*2014|mdash);/gi, ', ');
+    }
+
+    function escapeHtml(s) {
+      return normalizeCopy(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // ── Job-queue polling helper ──────────────────────────────────────────────
+    // Submit a fetch (fetchFn), get back {job_id} or an immediate error.
+    // Then poll GET /jobs/<id> every `interval` ms until state is done|error.
+    // Calls onProgress(job) on each poll tick so the caller can show log_tail.
+    // Returns the final job object.
+    async function pollJob({ fetchFn, onProgress, interval = 2000 }) {
+      // Submit
+      let submitRes;
+      try {
+        const r = await fetchFn();
+        submitRes = await r.json();
+        offlineBanner.style.display = 'none';
+      } catch (e) {
+        offlineBanner.style.display = 'block';
+        throw new Error(`Could not reach the server (${e.message}). Make sure serve.cmd is still running.`);
+      }
+      // Immediate validation error (no job_id): treat like old API error
+      if (!submitRes.success || !submitRes.job_id) {
+        const err = submitRes.error || 'Unknown error';
+        throw Object.assign(new Error(err), { immediate: true });
+      }
+      const jobId = submitRes.job_id;
+      // Poll until terminal state
+      while (true) {
+        await new Promise(r => setTimeout(r, interval));
+        let pollRes;
+        try {
+          const r = await fetch(`/jobs/${jobId}`, { cache: 'no-store' });
+          pollRes = await r.json();
+        } catch (e) {
+          // Transient network blip: keep polling
+          continue;
+        }
+        if (!pollRes.success) throw new Error(pollRes.error || 'Job lookup failed');
+        const job = pollRes.job;
+        if (onProgress) onProgress(job);
+        if (job.state === 'done' || job.state === 'error') return job;
+      }
+    }
+
+    // Format a log_tail array into a <pre> block for status display.
+    // Bounded + scrollable: codex streams its whole session (Claude streams
+    // almost nothing), so log views must never grow the page unbounded.
+    function logTailHtml(lines) {
+      if (!lines || !lines.length) return '';
+      return `<pre class="log-tail" style="margin: 6px 0 0; font-size: 11px; white-space: pre-wrap; word-break: break-all; opacity: 0.85; max-height: 200px; overflow-y: auto;">${escapeHtml(lines.join('\n'))}</pre>`;
+    }
+
+    // Pin every bounded log view to its newest line after a re-render.
+    function followTails() {
+      document.querySelectorAll('pre.log-tail').forEach(el => { el.scrollTop = el.scrollHeight; });
+    }
+
+    // Bounded version of a full stdout dump for completion boxes.
+    function stdoutTailHtml(stdout, maxLines = 60) {
+      const all = String(stdout || '').split('\n');
+      const shown = all.slice(-maxLines);
+      const head = all.length > maxLines ? `... (${all.length - maxLines} earlier lines trimmed)\n` : '';
+      return `<pre class="log-tail" style="margin: 8px 0 0; font-size: 11px; white-space: pre-wrap; word-break: break-all; opacity: 0.85; max-height: 260px; overflow-y: auto;">${escapeHtml(head + shown.join('\n'))}</pre>`;
+    }
+
+    // ── Convert (URL or file) ─────────────────────────────────────────────────
+    async function send(opts) {
+      busy(true);
+      const progress = opts.progress || 'Converting…';
+      delete opts.progress;
+      // URL converts pass their JSON payload here so a duplicate alert can
+      // offer a one-click forced re-convert. File uploads don't (multipart).
+      const retryPayload = opts.retryPayload || null;
+      delete opts.retryPayload;
+      setStatus('info', `<span class="spinner"></span>${progress}`);
+      try {
+        const job = await pollJob({
+          fetchFn: () => fetch(`/convert${wikiQS()}`, opts),
+          onProgress: (job) => {
+            const tail = logTailHtml(job.log_tail);
+            const qpos = job.queue_position != null ? ` · queue position ${job.queue_position}` : '';
+            setStatus('info', `<span class="spinner"></span>${progress}${qpos}${tail}`);
+            followTails();
+          },
+        });
+        offlineBanner.style.display = 'none';
+        const result = job.result || {};
+        if (job.state === 'done' && result.success) {
+          const name = result.output_path.split(/[\\\/]/).pop();
+          const link = `<a href="/files/${encodeURIComponent(name)}${wikiQS()}" target="_blank" style="color: inherit; text-decoration: underline;">${escapeHtml(name)}</a>`;
+          if (result.already_converted) {
+            const bits = [`<strong>Duplicate detected.</strong> This source was already converted as ${link}. Nothing new was created.`];
+            if (result.already_ingested) {
+              const page = result.source_page
+                ? ` as <code>${escapeHtml(result.source_page)}.md</code>` : '';
+              bits.push(`It's already ingested into this knowledge base${page}, likely by a watched channel. It won't appear under Pending, and there's nothing to ingest.`);
+            } else {
+              bits.push(`The existing transcript is staged and should show under <strong>Knowledge</strong> below. Use <strong>Ingest ready</strong> to add it to the wiki.`);
+            }
+            if (result.frames_requested_ignored) {
+              bits.push(`&#9888; Your visual-capture options were <strong>not applied</strong>. The existing transcript has no frames. Re-convert to capture them.`);
+            } else if (result.existing_has_frames) {
+              bits.push(`The existing transcript already includes visual capture (frames + OCR).`);
+            }
+            if (retryPayload) {
+              bits.push(`<button id="forceReconvertBtn" type="button">Re-convert anyway</button>`);
+            }
+            setStatus('warn', bits.join('<br>'));
+            document.getElementById('forceReconvertBtn')?.addEventListener('click', () => {
+              send({
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...retryPayload, force: true }),
+                retryPayload,
+                progress: 'Re-converting (forced)…',
+              });
+            });
+          } else if (result.visual_capture_failed) {
+            const reason = result.visual_capture_error
+              ? ` (${escapeHtml(result.visual_capture_error)})` : '';
+            const bits = [
+              `<strong>Transcript saved, but visual capture failed.</strong>${reason}`,
+              `The transcript is available as ${link}, but this conversion produced no video frames, so the ingest will be text-only whichever agent runs it.`,
+            ];
+            if (retryPayload) {
+              bits.push(`<button id="retryVisualCaptureBtn" type="button">Retry visual capture</button>`);
+            }
+            setStatus('warn', bits.join('<br>'));
+            document.getElementById('retryVisualCaptureBtn')?.addEventListener('click', () => {
+              send({
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...retryPayload, force: true }),
+                retryPayload,
+                progress: 'Retrying visual capture…',
+              });
+            });
+          } else {
+            setStatus('ok', `Saved ${link} to <code>${escapeHtml(result.output_path)}</code>`);
+          }
+          urlInput.value = '';
+          await refreshFiles();
+          await refreshPending();
+        } else {
+          const errMsg = job.error || result.error || 'Unknown error';
+          setStatus('err', `Failed: <pre>${escapeHtml(errMsg)}</pre>`);
+          // A failed video recovery still preserves its immutable capture for
+          // inspection. Refresh the readiness queue so it appears immediately
+          // with the exact guard diagnosis instead of looking lost.
+          await refreshFiles();
+          await refreshPending();
+        }
+      } catch (e) {
+        if (e.immediate) {
+          setStatus('err', `Failed: <pre>${escapeHtml(e.message)}</pre>`);
+        } else {
+          offlineBanner.style.display = 'block';
+          setStatus('err', `<code>${escapeHtml(e.message)}</code>`);
+        }
+      } finally {
+        busy(false);
+      }
+    }
+
+    // Deep visual capture implies basic frame capture. Keep the two toggles
+    // in sync so the UI reads as a progression: checking "deep" turns on
+    // "capture" above; turning "capture" off clears "deep".
+    const framesToggleEl = document.getElementById('framesToggle');
+    const denseToggleEl = document.getElementById('denseToggle');
+    denseToggleEl?.addEventListener('change', () => {
+      if (denseToggleEl.checked && framesToggleEl) framesToggleEl.checked = true;
+    });
+    framesToggleEl?.addEventListener('change', () => {
+      if (!framesToggleEl.checked && denseToggleEl) denseToggleEl.checked = false;
+    });
+
+    urlBtn.addEventListener('click', () => {
+      const url = urlInput.value.trim();
+      if (!url) { setStatus('err', 'Please paste a URL first.'); return; }
+      const dense = denseToggleEl?.checked || false;
+      // dense implies frames (server forces --frames when dense is set)
+      const frames = (framesToggleEl?.checked || false) || dense;
+      const progress = dense
+        ? 'Converting + deep visual capture (dense frames + OCR). This takes a couple minutes…'
+        : (frames ? 'Converting + capturing frames…' : 'Converting…');
+      send({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, frames, dense }),
+        retryPayload: { url, frames, dense },
+        progress,
+      });
+    });
+
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') urlBtn.click();
+    });
+
+    drop.addEventListener('click', () => fileInput.click());
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('over');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+      const fd = new FormData();
+      fd.append('file', file, file.name);
+      send({ method: 'POST', body: fd });
+    }
+
+    let healthOk = null;
+    async function pingHealth() {
+      try {
+        const res = await fetch('/healthz', { cache: 'no-store' });
+        if (!res.ok) throw new Error('not ok');
+        if (healthOk !== true) {
+          healthOk = true;
+          healthDot.classList.remove('down');
+          healthDot.classList.add('up');
+          healthDot.title = 'server is up';
+          offlineBanner.style.display = 'none';
+        }
+      } catch (_) {
+        if (healthOk !== false) {
+          healthOk = false;
+          healthDot.classList.remove('up');
+          healthDot.classList.add('down');
+          healthDot.title = 'server is not reachable';
+          offlineBanner.style.display = 'block';
+          filesBox.innerHTML = '<div style="color: var(--muted); font-size: 13px;">(server not reachable)</div>';
+        }
+      }
+    }
+
+    let pendingHasItems = false;
+
+    function readinessDuration(seconds) {
+      if (seconds == null) return '';
+      const total = Math.max(0, Number(seconds) || 0);
+      const hours = Math.floor(total / 3600);
+      const minutes = Math.floor((total % 3600) / 60);
+      const secs = Math.floor(total % 60);
+      return hours
+        ? `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+        : `${minutes}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function sourceReadinessHtml(item, index) {
+      const readiness = item.readiness || {};
+      const ready = readiness.status === 'ready';
+      const filename = item.filename || String(item.path || '').split(/[\\/]/).pop();
+      const href = `/files/${encodeURIComponent(filename)}${wikiQS()}`;
+      const facts = [];
+      if (item.source_type) facts.push(item.source_type);
+      if (readiness.duration_seconds != null) facts.push(readinessDuration(readiness.duration_seconds));
+      if (readiness.words) facts.push(`${readiness.words} words`);
+      if (readiness.provenance) facts.push(readiness.provenance);
+      if (readiness.language) facts.push(readiness.language);
+      const retryable = !ready
+        && /^https?:\/\//i.test(item.source || '')
+        && ['youtube', 'video'].includes(String(item.source_type || '').toLowerCase());
+      const rawProblem = String(readiness.problem || '');
+      const filenamePrefix = `${filename}: `;
+      const problem = rawProblem.startsWith(filenamePrefix)
+        ? rawProblem.slice(filenamePrefix.length)
+        : rawProblem;
+      return `
+        <div class="source-item">
+          <div class="source-line">
+            <span class="source-badge ${ready ? 'ready' : 'blocked'}">${ready ? 'Ready' : 'Needs recovery'}</span>
+            <a href="${href}" target="_blank">${escapeHtml(item.title || filename)}</a>
+          </div>
+          ${facts.length ? `<div class="source-detail">${escapeHtml(facts.join(' · '))}</div>` : ''}
+          ${problem ? `<div class="source-problem">${escapeHtml(problem)}</div>` : ''}
+          ${retryable ? `<button class="source-retry" type="button" data-retry-source="${index}" title="Retry every supported caption and audio recovery path. The original capture stays unchanged.">Retry recovery</button>` : ''}
+        </div>
+      `;
+    }
+
+    function wireSourceRecovery(items) {
+      wikiPending.querySelectorAll('[data-retry-source]').forEach(button => {
+        button.addEventListener('click', () => {
+          const item = items[Number(button.dataset.retrySource)];
+          if (!item || !item.source) return;
+          const retryPayload = {
+            url: item.source,
+            frames: !!item.has_frames,
+            dense: false,
+          };
+          send({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...retryPayload, force: true }),
+            retryPayload,
+            progress: 'Retrying captions and audio recovery…',
+          });
+        });
+      });
+    }
+
+    async function refreshPending() {
+      try {
+        const res = await fetch(`/pending${wikiQS()}`, { cache: 'no-store' });
+        const json = await res.json();
+        lastAgentAuth = json.agent_auth || null;
+        renderAgentOptions();
+        // Update the review line from the data we just fetched, BEFORE any of
+        // the early returns below; otherwise, once the queue empties after an
+        // ingest (json.count === 0 returns early), the counter never refreshed
+        // and stayed frozen at its pre-ingest value (e.g. stuck at 2/5).
+        renderReviewState(json.review || null);
+        if (!json.wiki_available) {
+          wikiPending.textContent = 'No wiki found.';
+          ingestBtn.disabled = true;
+          return;
+        }
+        if (json.error) {
+          pendingHasItems = false;
+          wikiPending.innerHTML = `<span style="color: var(--err);">Could not inspect staged sources: ${escapeHtml(json.error)}</span>`;
+          ingestBtn.disabled = true;
+          ingestBtn.textContent = 'Ingest ready';
+          return;
+        }
+        const provs = (lastAgentAuth && lastAgentAuth.providers) || {};
+        // The status the ingest would actually run under: the explicit
+        // pick, or whatever auto resolved to.
+        const activeId = agentPref === 'auto'
+          ? (lastAgentAuth && lastAgentAuth.auto) : agentPref;
+        const active = activeId ? provs[activeId] : null;
+        let authHint = '';
+        if (!agentReady()) {
+          if (agentPref !== 'auto' && active) {
+            const problem = !active.ok
+              ? `${escapeHtml(active.display_name)} not detected on the server: ${escapeHtml(active.error || 'unknown error')}`
+              : `${escapeHtml(active.display_name)} is installed but not logged in. Run <code>${escapeHtml(active.login_hint || '')}</code> in a terminal.`;
+            authHint = `<br><span style="color: var(--err); font-size: 12px;">${problem}</span>`;
+          } else {
+            // Built from the /pending payload, not hardcoded: a provider
+            // added server-side shows up here without touching this file.
+            const options = Object.values(provs).map(st =>
+              `${escapeHtml(st.display_name)} (<code>${escapeHtml(st.login_hint || '')}</code>)`);
+            const list = options.length
+              ? options.join(', ') : 'an agent CLI';
+            authHint = `<br><span style="color: var(--err); font-size: 12px;">No agent CLI is ready: install and log in one of ${list}.</span>`;
+          }
+        }
+        if (json.count === 0) {
+          pendingHasItems = false;
+          const busy = json.wiki_busy;
+          if (busy) {
+            const verb = busy.kind === 'review' ? 'Review' : 'Ingest';
+            wikiPending.innerHTML = `<span class="spinner"></span> ${verb} in progress (${escapeHtml(busy.state)}). The agent is still writing pages; this line refreshes when the job finishes.` + authHint;
+            ingestBtn.disabled = true;
+            ingestBtn.textContent = 'Ingest ready';
+            return;
+          }
+          let okLine = '<span style="color: var(--ok); font-weight:600;">&#10003;</span> Wiki is up to date.';
+          if (active && active.ok && active.logged_in) {
+            okLine += ` <span style="opacity: 0.55; font-size: 12px; font-family: var(--mono);">(${escapeHtml(active.display_name)} · ${escapeHtml(active.account || '')})</span>`;
+          }
+          wikiPending.innerHTML = okLine + authHint;
+          ingestBtn.disabled = true;
+          ingestBtn.textContent = 'Ingest ready';
+          return;
+        }
+        const readyCount = Number(json.ready_count ?? json.count) || 0;
+        const blockedCount = Number(json.blocked_count ?? 0) || 0;
+        pendingHasItems = readyCount > 0;
+        const summary = [
+          readyCount ? `<strong>${readyCount}</strong> ready` : '',
+          blockedCount ? `<strong style="color: var(--err);">${blockedCount}</strong> ${blockedCount === 1 ? 'needs' : 'need'} recovery` : '',
+        ].filter(Boolean).join(' · ');
+        const sourceRows = (json.pending || [])
+          .map((item, index) => sourceReadinessHtml(item, index))
+          .join('');
+        wikiPending.innerHTML = `${summary}<div class="source-queue">${sourceRows}</div>${authHint}`;
+        wireSourceRecovery(json.pending || []);
+        ingestBtn.textContent = readyCount ? `Ingest ${readyCount} ready` : 'Nothing ready';
+        ingestBtn.disabled = readyCount === 0 || !agentReady();
+        ingestBtn.title = readyCount === 0
+          ? 'Recover the blocked sources before ingest'
+          : (agentReady()
+            ? `Run the wiki ingest with ${active ? active.display_name : 'your agent'} using your subscription`
+            : 'The selected agent CLI must be installed and logged in on the server');
+      } catch (_) {
+        wikiPending.textContent = '(server not reachable)';
+        ingestBtn.disabled = true;
+      }
+    }
+
+    // Render the "X / N ingests since last review" line + button state.
+    // Reads the review block off the latest /pending response (we don't
+    // re-fetch: refreshPending() already has it).
+    let lastReview = null;
+    function renderReviewState(review) {
+      // Render from the review block refreshPending already fetched; no
+      // second /pending round-trip (which spawned a redundant pending.py +
+      // agent probe and lagged the counter behind the ingest).
+      lastReview = review || null;
+      {
+        if (!lastReview) {
+          reviewState.innerHTML = '';
+          reviewBtn.disabled = true;
+          return;
+        }
+        const n = lastReview.ingests_since_review || 0;
+        const t = lastReview.threshold || 0;
+        const auto = !!lastReview.auto_enabled;
+        const last = lastReview.last_review_at;
+        let line;
+        if (!auto) {
+          line = `<strong>${n}</strong> ingests since last review · auto-review off`;
+        } else if (n === 0) {
+          line = last
+            ? `&#10003; Reviewed at <span style="opacity:0.7; font-family: var(--mono); font-size: 12px;">${escapeHtml(last)}</span>`
+            : `&#10003; No ingests yet: auto-review every ${t}`;
+        } else if (n >= t) {
+          line = `<strong style="color: var(--voltage, #ffd93d);">${n}/${t}</strong> ingests since last review · auto-review will run next ingest`;
+        } else {
+          line = `<strong>${n}/${t}</strong> ingests since last review`;
+        }
+        reviewState.innerHTML = line;
+        reviewBtn.disabled = !agentReady();
+      }
+    }
+
+    reviewBtn.addEventListener('click', async () => {
+      if (!agentReady()) return;
+      reviewBtn.disabled = true;
+      reviewBtn.textContent = 'Reviewing…';
+      reviewStatus.innerHTML = `<div class="status info" style="margin-top: 10px;"><span class="spinner"></span>Reviewing the knowledge base. Promoting candidates flagged in log.md to full concept/entity pages and updating the index. 3–8 minutes.</div>`;
+      try {
+        const job = await pollJob({
+          fetchFn: () => fetch(`/review${wikiQS()}${providerQS()}`, { method: 'POST' }),
+          onProgress: (job) => {
+            reviewStatus.innerHTML = `<div class="status info" style="margin-top: 10px;"><span class="spinner"></span>Reviewing…${logTailHtml(job.log_tail)}</div>`;
+            followTails();
+          },
+        });
+        const result = job.result || {};
+        if (job.state === 'done' && result.success) {
+          const tail = (result.stdout_tail || []).join('\n');
+          reviewStatus.innerHTML = `<div class="status ok" style="margin-top: 10px;">Review complete.<pre style="margin: 8px 0 0; font-size: 11px; white-space: pre-wrap; opacity: 0.85;">${escapeHtml(tail)}</pre></div>`;
+        } else {
+          const errMsg = job.error || result.error || 'unknown error';
+          reviewStatus.innerHTML = `<div class="status err" style="margin-top: 10px;">Review failed: <pre style="margin: 6px 0 0; font-size: 11px; white-space: pre-wrap;">${escapeHtml(errMsg)}</pre></div>`;
+        }
+      } catch (e) {
+        const msg = e.immediate ? e.message : `Could not reach the server (${e.message})`;
+        reviewStatus.innerHTML = `<div class="status err" style="margin-top: 10px;">${escapeHtml(msg)}</div>`;
+      } finally {
+        reviewBtn.textContent = 'Run review now';
+        await refreshPending();
+      }
+    });
+
+    ingestBtn.addEventListener('click', async () => {
+      if (!pendingHasItems || !agentReady()) return;
+      ingestBtn.disabled = true;
+      ingestBtn.textContent = 'Ingesting…';
+      ingestStatus.innerHTML = `<div class="status info" style="margin-top: 10px;"><span class="spinner"></span>The agent is reading the transcript(s), updating sources/topics/entities, and refreshing index + log. Each transcript takes 3–8 minutes. Deep-capture videos with frames run longer, usually 10–20 minutes, and the log stays quiet until the agent finishes. That silence is normal.</div>`;
+      try {
+        const job = await pollJob({
+          fetchFn: () => fetch(`/ingest${wikiQS()}${providerQS()}`, { method: 'POST' }),
+          onProgress: (job) => {
+            ingestStatus.innerHTML = `<div class="status info" style="margin-top: 10px;"><span class="spinner"></span>Ingesting…${logTailHtml(job.log_tail)}</div>`;
+            followTails();
+          },
+        });
+        const result = job.result || {};
+        if (job.state === 'done' && result.success) {
+          ingestStatus.innerHTML = `<div class="status ok" style="margin-top: 10px;">Ingest complete.${stdoutTailHtml(result.stdout)}</div>`;
+          followTails();
+        } else {
+          const errMsg = job.error || result.error || 'unknown error';
+          ingestStatus.innerHTML = `<div class="status err" style="margin-top: 10px;">Failed: <pre style="margin: 6px 0 0; font-size: 11px; white-space: pre-wrap;">${escapeHtml(errMsg)}</pre></div>`;
+        }
+      } catch (e) {
+        const msg = e.immediate ? e.message : `Could not reach the server (${e.message})`;
+        ingestStatus.innerHTML = `<div class="status err" style="margin-top: 10px;">${escapeHtml(msg)}</div>`;
+      } finally {
+        ingestBtn.textContent = 'Ingest ready';
+        await refreshPending();
+      }
+    });
+
+    // ── Watched channels (auto-ingest watcher) ───────────────────────────────
+    const watchList = document.getElementById('watchList');
+    const watchHistory = document.getElementById('watchHistory');
+    const watchUrl = document.getElementById('watchUrl');
+    const watchAuto = document.getElementById('watchAuto');
+    const watchFrames = document.getElementById('watchFrames');
+    const watchAddBtn = document.getElementById('watchAddBtn');
+    const watchCheckBtn = document.getElementById('watchCheckBtn');
+    const watchStatus = document.getElementById('watchStatus');
+
+    function setWatchStatus(kind, html) {
+      watchStatus.innerHTML = html
+        ? `<div class="status ${kind}" style="margin-top: 4px;">${html}</div>` : '';
+    }
+
+    function renderWatchList(subs) {
+      if (!subs.length) {
+        watchList.innerHTML = '<div style="color: var(--dim); font-size: 13px;">No channels watched in this base yet.</div>';
+        return;
+      }
+      watchList.innerHTML = subs.map(s => `
+        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg-elevated, #11141b); border: 1px solid var(--border); border-radius: 12px; font-size: 13px;">
+          <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(s.url)}">${escapeHtml(s.title || s.id)}</span>
+          <span style="color: var(--dim); font-size: 11px; font-family: var(--mono);" title="videos captured automatically since subscribing${s.last_converted ? ` (last: ${escapeHtml(s.last_converted)})` : ''} · new found on the last check">${s.converted_total || 0} captured · ${s.last_check ? `${s.last_new} new` : 'not checked yet'}</span>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); cursor: pointer;" title="Ingest new videos unattended">
+            <input type="checkbox" data-id="${escapeHtml(s.id)}" data-flag="auto_ingest" ${s.auto_ingest ? 'checked' : ''} style="accent-color: var(--accent);"> auto
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); cursor: pointer;" title="Deep visual capture on new videos">
+            <input type="checkbox" data-id="${escapeHtml(s.id)}" data-flag="frames" ${s.frames ? 'checked' : ''} style="accent-color: var(--accent);"> frames
+          </label>
+          <button type="button" data-unsub="${escapeHtml(s.id)}" title="Stop watching" style="background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 3px 9px; font-size: 12px;">✕</button>
+        </div>`).join('');
+
+      watchList.querySelectorAll('input[data-flag]').forEach(inp => {
+        inp.addEventListener('change', async () => {
+          const body = { wiki: currentWiki, id: inp.dataset.id };
+          body[inp.dataset.flag] = inp.checked;
+          try {
+            const r = await fetch('/watcher/update', { method: 'POST',
+              headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const j = await r.json();
+            if (!j.success) throw new Error(j.error || 'update failed');
+          } catch (e) {
+            inp.checked = !inp.checked;
+            setWatchStatus('err', escapeHtml(e.message));
+          }
+        });
+      });
+      watchList.querySelectorAll('button[data-unsub]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            const r = await fetch('/watcher/unsubscribe', { method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ wiki: currentWiki, id: btn.dataset.unsub }) });
+            const j = await r.json();
+            if (!j.success) throw new Error(j.error || 'unsubscribe failed');
+            loadWatcher();
+          } catch (e) { setWatchStatus('err', escapeHtml(e.message)); }
+        });
+      });
+    }
+
+    function renderWatchHistory(history) {
+      if (!history || !history.length) {
+        watchHistory.innerHTML = '<div style="font-size: 12px; color: var(--dim);">Capture log: nothing picked up automatically yet. New uploads from watched channels will be listed here.</div>';
+        return;
+      }
+      const fmt = iso => {
+        try {
+          return new Date(iso).toLocaleString(undefined,
+            { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch (_) { return iso; }
+      };
+      watchHistory.innerHTML = `
+        <details style="font-size: 12px;">
+          <summary style="cursor: pointer; color: var(--dim);">Capture log: ${history.length} video(s) picked up automatically</summary>
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px;">
+            ${history.slice(0, 25).map(h => `
+              <div style="display: flex; gap: 8px; align-items: baseline;">
+                <span style="color: var(--dim); font-family: var(--mono); font-size: 11px; white-space: nowrap;">${escapeHtml(fmt(h.at))}</span>
+                <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted);" title="${escapeHtml(h.channel || h.sub || '')}">${escapeHtml(h.title)}</span>
+                <span style="color: ${h.auto_ingest ? 'var(--accent)' : 'var(--dim)'}; font-size: 11px; white-space: nowrap;" title="${h.auto_ingest ? 'ingest was queued unattended' : 'staged for you to approve'}">${h.auto_ingest ? 'auto-ingest' : 'pending'}</span>
+              </div>`).join('')}
+          </div>
+        </details>`;
+    }
+
+    async function loadWatcher() {
+      try {
+        const r = await fetch(`/watcher${wikiQS()}`, { cache: 'no-store' });
+        const j = await r.json();
+        if (j.success) {
+          renderWatchList(j.subscriptions || []);
+          renderWatchHistory(j.history || []);
+        }
+      } catch (_) { /* offline: banner handles it */ }
+    }
+
+    watchAddBtn.addEventListener('click', async () => {
+      const url = watchUrl.value.trim();
+      if (!url) { watchUrl.focus(); return; }
+      watchAddBtn.disabled = true;
+      watchAddBtn.textContent = 'Resolving…';
+      try {
+        const r = await fetch('/watcher/subscribe', { method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wiki: currentWiki, url,
+                                 auto_ingest: watchAuto.checked,
+                                 frames: watchFrames.checked }) });
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'could not subscribe');
+        watchUrl.value = ''; watchAuto.checked = false; watchFrames.checked = false;
+        setWatchStatus('ok', `Watching <strong>${escapeHtml(j.subscription.title)}</strong>. Only videos published from now on get picked up.`);
+        loadWatcher();
+      } catch (e) {
+        setWatchStatus('err', escapeHtml(e.message));
+      } finally {
+        watchAddBtn.disabled = false;
+        watchAddBtn.textContent = 'Watch';
+      }
+    });
+
+    watchCheckBtn.addEventListener('click', async () => {
+      watchCheckBtn.disabled = true;
+      setWatchStatus('info', '<span class="spinner"></span>Sweeping subscribed channels…');
+      try {
+        const job = await pollJob({
+          fetchFn: () => fetch('/watcher/check', { method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ wiki: currentWiki }) }),
+          onProgress: (job) => {
+            const tail = logTailHtml(job.log_tail);
+            setWatchStatus('info', `<span class="spinner"></span>Sweeping subscribed channels…${tail}`);
+            followTails();
+          },
+        });
+        const res = job.result || {};
+        if (job.state !== 'done' || !res.success) {
+          throw new Error(job.error || res.error || 'sweep failed');
+        }
+        const n = (res.converted || []).length;
+        let html = n
+          ? `Found <strong>${n}</strong> new video(s): ` +
+            res.converted.map(v => escapeHtml(v.title)).join(' · ') +
+            '. Staged as pending below.'
+          : 'No new videos since the last check.';
+        if (res.ingest && res.ingest.success) {
+          html += ' Auto-ingest queued.';
+        } else if (res.ingest && !res.ingest.success) {
+          html += ` <span style="color: var(--dim);">(auto-ingest skipped: ${escapeHtml(res.ingest.error || '')})</span>`;
+        }
+        setWatchStatus(n ? 'ok' : 'info', html);
+        loadWatcher();
+        refreshPending();
+        refreshFiles();
+      } catch (e) {
+        setWatchStatus('err', escapeHtml(e.message));
+      } finally {
+        watchCheckBtn.disabled = false;
+      }
+    });
+
+    loadVaults().then(() => {
+      refreshFiles();
+      refreshPending();
+      loadWatcher();
+    });
+    pingHealth();
+    setInterval(pingHealth, 4000);
+    setInterval(refreshPending, 10000);
+    setInterval(loadVaults, 30000);   // pick up vaults created elsewhere + fresh counts
+  </script>
+</body>
+</html>

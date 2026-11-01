@@ -1,0 +1,55 @@
+# Stale SOPs are the actual compliance pain this model sells against: a
+# procedure nobody has confirmed in a quarter is a procedure nobody can be
+# audited on. Freshness is the one metric an ops owner checks monthly.
+filters:
+  or:
+    - file.hasTag("wiki/procedures")
+    - file.hasTag("wiki/policies")
+    - file.hasTag("wiki/runbooks")
+
+formulas:
+  days_since_review: '(today() - date(last_updated)).days'
+
+properties:
+  formula.days_since_review:
+    displayName: Days since review
+  kind:
+    displayName: Kind
+  last_updated:
+    displayName: Updated
+
+views:
+  - type: table
+    name: "Overdue review (90+ days)"
+    filters:
+      and:
+        - '(today() - date(last_updated)).days > 90'
+    order:
+      - file.name
+      - kind
+      - formula.days_since_review
+      - last_updated
+    groupBy:
+      property: file.folder
+      direction: ASC
+
+  - type: table
+    name: "Due soon (60-90 days)"
+    filters:
+      and:
+        - '(today() - date(last_updated)).days > 60'
+        - '(today() - date(last_updated)).days <= 90'
+    order:
+      - file.name
+      - kind
+      - formula.days_since_review
+
+  - type: table
+    name: "Recently reviewed (30 days)"
+    filters:
+      and:
+        - '(today() - date(last_updated)).days <= 30'
+    order:
+      - file.name
+      - kind
+      - last_updated

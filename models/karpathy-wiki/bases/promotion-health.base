@@ -1,0 +1,77 @@
+filters:
+  or:
+    - file.hasTag("wiki/topics")
+    - file.hasTag("wiki/entities")
+    - file.hasTag("wiki/concepts")
+
+formulas:
+  evidence: 'sources.length'
+  threshold: 'if(file.inFolder("concepts"), {concept_promote_after}, {topic_promote_after})'
+  depends_on_this: 'file.backlinks.length'
+
+properties:
+  formula.evidence:
+    displayName: Sources
+  formula.threshold:
+    displayName: Needs
+  formula.depends_on_this:
+    displayName: Inbound
+  last_updated:
+    displayName: Updated
+
+views:
+  # Real integrity violations. Entities are EXCLUDED by design: the ingest
+  # prompt deliberately creates an entity page on first mention when it is a
+  # named link target, so a single-source entity is correct behaviour, not
+  # drift. Including them here would report ~30% of the folder as broken.
+  - type: table
+    name: "Promotion violations"
+    filters:
+      and:
+        - 'sources.length < if(file.inFolder("concepts"), {concept_promote_after}, {topic_promote_after})'
+        - '!file.hasTag("wiki/entities")'
+    order:
+      - file.name
+      - formula.evidence
+      - formula.threshold
+      - last_updated
+    groupBy:
+      property: file.folder
+      direction: ASC
+
+  # Not errors — a work queue. Single-source entities that many pages already
+  # link to are the highest-value targets for a second source.
+  - type: table
+    name: "Thin entities (enrichment queue)"
+    filters:
+      and:
+        - file.hasTag("wiki/entities")
+        - 'sources.length < {entity_promote_after}'
+    order:
+      - file.name
+      - formula.depends_on_this
+      - formula.evidence
+      - last_updated
+
+  - type: table
+    name: "Evidence ranking"
+    order:
+      - file.name
+      - formula.evidence
+      - formula.depends_on_this
+      - last_updated
+    groupBy:
+      property: file.folder
+      direction: ASC
+    summaries:
+      formula.evidence: Average
+
+  - type: table
+    name: "Stale (60+ days)"
+    filters:
+      and:
+        - '(today() - date(last_updated)).days > 60'
+    order:
+      - file.name
+      - last_updated
+      - formula.evidence

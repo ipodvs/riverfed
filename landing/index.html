@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Riverfed: Watch once. Teach forever.</title>
+<meta name="description" content="Drop in a YouTube link, PDF, or doc. Get back a structured knowledge base, Marp decks, Excalidraw diagrams, and speaker manuals. A studio that grows new generators.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Load fonts non-blocking so the page renders even when the CDN is slow / offline -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+<style>
+  :root {
+    /* "Porcelain" light theme (2026-07 redesign). Sober white/grey ground;
+       Jedi colors survive as ACCENTS only: hues darkened for contrast on
+       white. Matches index.html + nav.js. Decks keep the dark palette. */
+    --bg:           #f7f8fa;
+    --bg-elevated:  #eef1f5;
+    --bg-card:      #ffffff;
+    --foundation:   #15171c;
+    --border:       #e2e5eb;
+    --border-soft:  #eaedf2;
+
+    --text:         #15171c;
+    --text-muted:   #5c6470;
+    --text-dim:     #7d8490;
+
+    /* One editorial accent on the marketing surface. Richer palettes belong
+       to data or generated teaching materials, never page decoration. */
+    --accent:       #157347;   /* Jedi Green: Yoda, Luke's new blade */
+    --accent-hover: #115d3a;
+
+    --pad-x:        clamp(24px, 5vw, 80px);
+    --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono:    'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-hover); }
+  h1, h2, h3, h4 { margin: 0; letter-spacing: -0.02em; font-weight: 800; line-height: 1.05; }
+  p { margin: 0; }
+  code, .mono { font-family: var(--font-mono); }
+  code { font-size: 0.92em; background: rgba(21, 115, 71,0.08); color: var(--accent); padding: 2px 6px; border-radius: 4px; }
+
+  ::selection { background: rgba(21, 115, 71,0.20); }
+
+  /* ============ LAYOUT ============ */
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 var(--pad-x); }
+  section { padding: 110px 0; position: relative; }
+  section + section { border-top: 1px solid var(--border-soft); }
+
+  /* ============ HERO ============
+     Centered narrative composition: mark above headline, everything on
+     one axis. Structure carries the design; no side ornament. */
+  .hero {
+    position: relative; padding-top: 84px; padding-bottom: 110px;
+    text-align: center;
+  }
+  .hero .pre {
+    display: block;
+    padding: 0; border: 0; background: transparent;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .hero .pre .dot { display: none; }
+  .hero h1 {
+    font-size: clamp(46px, 7vw, 84px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    max-width: 15ch;
+    margin: 0 auto 24px;
+    text-wrap: balance;
+  }
+  .hero h1 .grad { color: var(--accent); }
+  .hero .sub {
+    font-size: clamp(17px, 1.7vw, 20px);
+    color: var(--text-muted);
+    max-width: 52ch;
+    margin: 0 auto 40px;
+  }
+  .hero .sub strong { color: var(--text); font-weight: 600; }
+  .hero .ctas { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
+  .hero .ctas a.primary,
+  .hero .ctas a.primary:link,
+  .hero .ctas a.primary:visited {
+    background: var(--accent);
+    color: #ffffff;
+    padding: 14px 24px; border-radius: 7px;
+    font-size: 16px; font-weight: 600;
+    transition: background 0.15s ease;
+  }
+  .hero .ctas a.primary:hover,
+  .hero .ctas a.primary:active {
+    color: #ffffff;
+    background: var(--accent-hover);
+  }
+  .hero .ctas .secondary {
+    color: var(--text); padding: 14px 8px;
+    background: transparent;
+    border: 0; border-radius: 0;
+    font-size: 16px; font-weight: 500;
+    transition: border-color 0.15s ease;
+  }
+  .hero .ctas .secondary:hover { color: var(--accent); }
+  .hero .ctas .secondary .arrow { display: inline-block; margin-left: 6px; transition: transform 0.15s ease; }
+  .hero .ctas .secondary:hover .arrow { transform: translateX(4px); }
+
+  .hero .types {
+    display: flex; flex-wrap: wrap; gap: 0; max-width: 720px;
+    justify-content: center; margin: 0 auto;
+  }
+  .hero .types .tag {
+    padding: 0; font-size: 12px; font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    border: 0; border-radius: 0;
+    font-family: var(--font-mono);
+  }
+  .hero .types .tag:not(:last-child)::after {
+    content: "·"; color: #b5bbc3; margin: 0 9px;
+  }
+  .hero .types .tag.hot { color: var(--accent); }
+
+
+  /* ============ SECTION TITLES ============
+     Left-aligned editorial heads; avoid repeating a centered hero stack. */
+  .section-head { max-width: 760px; margin: 0 0 56px; text-align: left; }
+  .section-head .eyebrow {
+    color: var(--text-dim); font-family: var(--font-mono);
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 16px;
+  }
+  .section-head h2 {
+    font-size: clamp(32px, 4vw, 46px);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    margin-bottom: 16px;
+    text-wrap: balance;
+  }
+  .section-head p {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 58ch;
+    margin: 0;
+  }
+
+  /* ============ PIPELINE: 3-stage centerpiece ============ */
+  .pipeline {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0; align-items: stretch;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .pipe-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    padding: 32px 30px;
+    position: relative;
+    box-shadow: none;
+  }
+  .pipe-card:last-child { border-right: 0; }
+  .pipe-card .icon {
+    width: 24px; height: 24px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    display: flex; align-items: center; justify-content: flex-start;
+    margin-bottom: 24px;
+  }
+  .pipe-card .icon img {
+    width: 22px; height: 22px;
+    filter: grayscale(1) brightness(0.28);
+    opacity: 0.9;
+  }
+  .pipe-card .step {
+    color: var(--accent); font-size: 12px; font-weight: 800;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    font-family: var(--font-mono); margin-bottom: 10px;
+  }
+  .pipe-card h3 {
+    font-size: 24px; line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .pipe-card p { color: var(--text-muted); font-size: 15px; line-height: 1.55; }
+  .pipe-card .deliverable {
+    display: inline-block; margin-top: auto;
+    max-width: 100%;
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--text-dim);
+    padding: 14px 0 0; background: transparent;
+    border-radius: 0; border: 0; border-top: 1px solid var(--border-soft);
+    overflow-wrap: anywhere;
+  }
+  .pipe-arrow {
+    display: none;
+  }
+  @media (max-width: 880px) {
+    .pipeline { grid-template-columns: 1fr; }
+    .pipe-card { border-right: 0; border-bottom: 1px solid var(--border); }
+    .pipe-card:last-child { border-bottom: 0; }
+  }
+
+  /* ============ NUMBERS / SOCIAL PROOF ============ */
+  .numbers {
+    padding: 56px 0 8px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 32px;
+    margin-top: 40px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .num {
+    text-align: center;
+  }
+  .num .big {
+    font-size: 54px; font-weight: 700; line-height: 1;
+    color: var(--text);
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .num .label {
+    margin-top: 12px; color: var(--text-muted);
+    font-size: 13px; font-weight: 500;
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .numbers-note {
+    min-height: 22px; margin-top: 18px;
+    color: var(--text-dim); font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.05em;
+  }
+  .numbers-note a { color: var(--accent); text-decoration: underline; }
+  @media (max-width: 700px) { .numbers { grid-template-columns: repeat(2, 1fr); padding: 32px 24px; gap: 24px; } .num .big { font-size: 44px; } }
+
+  /* ============ FEATURE CARDS ============ */
+  .features {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0 36px;
+    border-top: 1px solid var(--border);
+  }
+  .feat {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    padding: 26px 0 28px;
+    box-shadow: none;
+  }
+  .feat .icon {
+    display: none;
+  }
+  .feat h3 { font-size: 19px; margin-bottom: 8px; }
+  .feat p { color: var(--text-muted); font-size: 15px; line-height: 1.55; }
+  .feat .tag {
+    display: block; margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--text-dim);
+    padding: 0; border-radius: 0;
+    background: transparent;
+    letter-spacing: 0.06em;
+  }
+  @media (max-width: 880px) { .features { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .features { grid-template-columns: 1fr; } }
+
+  /* ============ FILE-TYPES GRID ============ */
+  .types-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 28px;
+    border-top: 1px solid var(--border);
+  }
+  .type-card {
+    min-height: 74px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    display: flex; flex-direction: row;
+    align-items: center; justify-content: flex-start;
+    gap: 14px;
+    transition: color 0.15s ease;
+  }
+  .type-card:hover { color: var(--accent); }
+  .type-card .ext {
+    font-family: var(--font-mono);
+    font-size: 16px; font-weight: 700;
+    color: var(--accent);
+    min-width: 50px;
+  }
+  .type-card .label {
+    font-size: 12px; color: var(--text-muted);
+    font-weight: 500;
+  }
+  .type-card.youtube .ext,
+  .type-card.audio .ext,
+  .type-card.video .ext { color: var(--accent); }
+  @media (max-width: 700px) { .types-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  /* ============ MODEL-AGNOSTIC KNOWLEDGE ENGINE ============ */
+  .layers {
+    display: grid; grid-template-columns: 1fr 1.3fr; gap: 60px; align-items: center;
+  }
+  .layers .stack {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+  }
+  .layer {
+    border-radius: 0; padding: 26px 28px;
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid var(--border-soft);
+    background: var(--bg-card);
+    position: relative;
+  }
+  .layer:last-child { border-bottom: 0; }
+  .layer .num {
+    position: absolute; right: 22px; top: 22px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--text-dim); letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .layer h4 { font-size: 17px; margin-bottom: 6px; font-weight: 700; }
+  .layer p { color: var(--text-muted); font-size: 14px; }
+  .layer.l1 { border-left: 3px solid var(--accent); }
+  .layer.l2 { border-left: 3px solid #66726b; }
+  .layer.l3 { border-left: 3px solid #aeb6b1; }
+  .layer.l4 { border-left: 3px solid #d5dad7; }
+  @media (max-width: 880px) { .layers { grid-template-columns: 1fr; gap: 32px; } }
+
+  /* ============ KNOWLEDGE MODEL REGISTRY ============ */
+  .model-catalogue {
+    margin-top: 34px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .model-row {
+    display: grid; grid-template-columns: minmax(180px, 0.7fr) minmax(280px, 1.5fr);
+    gap: 28px; padding: 26px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .model-row:last-child { border-bottom: 0; }
+  .model-row h3 { margin: 0 0 8px; font-size: 20px; }
+  .model-row p { margin: 0; color: var(--text-muted); font-size: 15px; line-height: 1.55; }
+  .model-meta {
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.05em; line-height: 1.6;
+  }
+  .model-loading { padding: 26px 0; color: var(--text-dim); font-family: var(--font-mono); font-size: 12px; }
+  @media (max-width: 700px) {
+    .model-row { grid-template-columns: 1fr; gap: 12px; }
+  }
+
+  /* ============ FAQ ============ */
+  .faq { max-width: 760px; margin: 0 auto; }
+  .q {
+    border-bottom: 1px solid var(--border);
+    padding: 22px 0;
+    cursor: pointer;
+  }
+  .q summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 18px; font-weight: 600; color: var(--text);
+  }
+  .q summary::-webkit-details-marker { display: none; }
+  .q summary::after {
+    content: "+";
+    color: var(--accent); font-size: 24px; font-weight: 300;
+    transition: transform 0.2s ease;
+  }
+  .q[open] summary::after { transform: rotate(45deg); }
+  .q .answer { margin-top: 12px; color: var(--text-muted); font-size: 16px; line-height: 1.7; }
+
+  /* ============ FINAL CTA ============ */
+  .final {
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    padding: 72px 0 0;
+    text-align: left;
+    position: relative;
+    box-shadow: none;
+  }
+  .final h2 { font-size: clamp(36px, 5vw, 56px); margin-bottom: 16px; position: relative; }
+  .final .accent-text { color: var(--accent); }
+  .final p { color: var(--text-muted); font-size: 19px; max-width: 50ch; margin: 0 0 32px; position: relative; }
+  .final a.primary,
+  .final a.primary:link,
+  .final a.primary:visited {
+    display: inline-block;
+    background: var(--accent);
+    color: #ffffff;
+    padding: 15px 24px; border-radius: 7px;
+    font-size: 17px; font-weight: 600;
+    position: relative;
+    transition: background 0.15s ease;
+  }
+  .final a.primary:hover,
+  .final a.primary:active {
+    color: #ffffff;
+    background: var(--accent-hover);
+  }
+  @media (max-width: 700px) { .final { padding-top: 48px; } }
+
+  /* ============ FOOTER ============ */
+  footer {
+    padding: 48px 0 64px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+  }
+  footer .row {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  footer .mono { font-family: var(--font-mono); }
+
+  /* Content is present immediately. Motion is reserved for state changes. */
+  .reveal { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<div data-pa-nav></div>
+<script>
+  (function loadSharedNav() {
+    const script = document.createElement("script");
+    script.src = location.protocol === "file:" ? "nav.js" : "/nav.js";
+    script.defer = true;
+    document.head.appendChild(script);
+  }());
+</script>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="container">
+    <div class="pre"><span class="dot"></span> Knowledge that compounds</div>
+    <h1>Watch once.<br><span class="grad">Teach forever.</span></h1>
+    <p class="sub">
+      Drop in a <strong>YouTube link</strong>, a <strong>web article</strong>, a <strong>PDF</strong>, or a <strong>doc</strong>.
+      Riverfed turns it into a <strong>knowledge base</strong>, then into <strong>Marp decks</strong>,
+      <strong>editable PowerPoint</strong>, <strong>Excalidraw diagrams</strong>, and
+      <strong>speaker manuals</strong>, all styled by a
+      <strong>design picker</strong> you can edit or extend.
+      Every dropped file makes the next one smarter.
+    </p>
+    <div class="ctas">
+      <a href="#cta" class="primary">Try the demo →</a>
+      <a href="#pipeline" class="secondary">See how it works <span class="arrow">→</span></a>
+    </div>
+    <div class="types">
+      <span class="tag hot">.youtube</span>
+      <span class="tag hot">web&nbsp;article</span>
+      <span class="tag">.pdf</span>
+      <span class="tag">.docx</span>
+      <span class="tag">.pptx</span>
+      <span class="tag">.xlsx</span>
+      <span class="tag">.mp3</span>
+      <span class="tag">.mp4</span>
+      <span class="tag">.html</span>
+      <span class="tag">.epub</span>
+      <span class="tag">.md</span>
+      <span class="tag">.txt</span>
+      <span class="tag mono">+ more</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THE PROMISE ============ -->
+<section>
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">The problem</div>
+      <h2>You consume more than you remember.<br>Riverfed turns it into an <span class="mono" style="color:var(--accent);">asset</span>.</h2>
+      <p>
+        Every podcast, masterclass, and PDF you've watched in 2026 lives somewhere as a dead artefact:
+        a tab you closed or a transcript you'll never re-read. Riverfed ingests it once and makes it
+        compound: a wiki that gets denser, a deck that fans out into trainings, a vault your agents can read.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PIPELINE ============ -->
+<section id="pipeline">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">The pipeline</div>
+      <h2>Three steps. Fully automatic.</h2>
+      <p>Add what you have. Organise it with the right knowledge model. Generate material people and agents can use.</p>
+    </div>
+    <div class="pipeline reveal">
+      <div class="pipe-card">
+        <div class="icon"><img src="icons/file-spark.svg" alt=""></div>
+        <div class="step">Step 01</div>
+        <h3>Ingest</h3>
+        <p>Drop a URL or drag in a file. We extract clean Markdown from transcripts, OCR'd PDFs, parsed slides, and transcribed audio. Each output includes frontmatter, deduplication, and source-URL tracking.</p>
+        <span class="deliverable">→ output/*.md</span>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-card">
+        <div class="icon"><img src="icons/hub-integration.svg" alt=""></div>
+        <div class="step">Step 02</div>
+        <h3>Organise</h3>
+        <p>An agent reads the new source in the context of the whole base. The selected knowledge model decides the folders, relationships, promotion rules, and prompts.</p>
+        <span class="deliverable">→ model folders + links + promotion rules</span>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-card">
+        <div class="icon"><img src="icons/layers.svg" alt=""></div>
+        <div class="step">Step 03</div>
+        <h3>Activate</h3>
+        <p>The knowledge base feeds the Studio. Generate teaching decks, editable PowerPoint, diagrams, speaker guides, Anki cards, or agent skills according to the model.</p>
+        <span class="deliverable">→ training · diagrams · flashcards · skills</span>
+      </div>
+    </div>
+
+    <div class="numbers reveal" id="liveWikiStats" aria-live="polite" aria-busy="true">
+      <div class="num"><div class="big">...</div><div class="label">Loading main wiki</div></div>
+    </div>
+    <div class="numbers-note" id="liveWikiStatus">Reading the main knowledge base...</div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS: LAYERS ============ -->
+<section>
+  <div class="container">
+    <div class="layers">
+      <div class="reveal">
+        <div class="eyebrow" style="color:var(--text-dim); font-family:var(--font-mono); font-size:12px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; margin-bottom:16px;">The system</div>
+        <h2 style="font-size: clamp(34px, 4.5vw, 52px); line-height: 1.05; margin-bottom: 16px;">One engine. Many ways to organise knowledge.</h2>
+        <p style="color: var(--text-muted); font-size: 19px; max-width: 56ch; margin-bottom: 22px;">
+          The Karpathy teach-back wiki is one shipped model, not the whole product. Second Brain turns captured knowledge into projects and areas. SOPs-to-Skills turns operational knowledge into instructions agents can execute. Each model shares the same capture, governance, and output engine.
+        </p>
+        <p style="color: var(--text-dim); font-size: 15px;">
+          New agent practices can be added as model manifests. The Studio discovers them without a page or server rewrite.
+        </p>
+      </div>
+      <div class="reveal">
+        <div class="stack">
+          <div class="layer l1">
+            <div class="num">Layer 1</div>
+            <h4>Capture</h4>
+            <p>Keep converted files and transcripts intact, traceable, and ready to reuse.</p>
+          </div>
+          <div class="layer l2">
+            <div class="num">Layer 2</div>
+            <h4>Organise</h4>
+            <p>Shape each base with the model that fits the work: teach-back, PARA, operational skills, or a custom method.</p>
+          </div>
+          <div class="layer l3">
+            <div class="num">Layer 3</div>
+            <h4>Govern</h4>
+            <p>Apply the model's schema, relationships, promotion thresholds, and agent instructions.</p>
+          </div>
+          <div class="layer l4">
+            <div class="num">Layer 4</div>
+            <h4>Activate</h4>
+            <p>Turn the base into teaching material, decision support, spaced repetition, or executable agent skills.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODEL REGISTRY ============ -->
+<section id="tiers">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Knowledge model registry</div>
+      <h2>Best practices become reusable models.</h2>
+      <p>Each model packages its folders, relationships, promotion thresholds, ingest prompts, and generators. Add a model to the registry and it appears here automatically.</p>
+    </div>
+    <div class="model-catalogue reveal" id="modelCatalogue" aria-live="polite" aria-busy="true">
+      <div class="model-loading">Loading knowledge models...</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT YOU GET ============ -->
+<section id="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">What you get</div>
+      <h2>One drop. A whole studio.</h2>
+      <p>Every ingest emits a portable knowledge base plus the materials to teach it. The Studio keeps growing.</p>
+    </div>
+    <div class="features reveal">
+      <div class="feat">
+        <div class="icon"><img src="icons/folder-spark.svg" alt=""></div>
+        <h3>Model-shaped vault</h3>
+        <p>The selected model defines the folders and links, from sources, topics, entities, and concepts to PARA or a skill library. Each base lives outside the product as its own portable, git-ready vault.</p>
+        <span class="tag">~/RiverfedVaults/</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/layers-stack.svg" alt=""></div>
+        <h3>Auto-rendered Marp deck</h3>
+        <p>~36 slides, brand-themed, real source citations, no bullet-soup. The Studio renders <strong>HTML, PDF, and PPTX</strong> the moment the agent writes the markdown. No manual Marp command.</p>
+        <span class="tag">.md + .html + .pdf + .pptx</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/laptop.svg" alt=""></div>
+        <h3>Native editable PowerPoint</h3>
+        <p>A sibling renderer builds a real .pptx in which every shape and text box is hand-editable. Choose from <strong>13 slide types</strong>: cover, lead, section, content, KPI, donut KPI, quote, versus, cards, six-up, flow, timeline, and hub.</p>
+        <span class="tag">.pptx · 13 types</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/critical-thinking.svg" alt=""></div>
+        <h3>Design picker + editor</h3>
+        <p>Pick a palette + typography from the Studio, or build your own. Three ship by default (<strong>Riverfed</strong>, <strong>Heritage</strong>, <strong>Aurora</strong>) and the editor lets you customise colours + fonts. <a href="https://github.com/google-labs-code/design.md" target="_blank" style="color: var(--accent);">DESIGN.md spec</a>.</p>
+        <span class="tag">design.md</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/network.svg" alt=""></div>
+        <h3>Excalidraw diagrams</h3>
+        <p>Brand-coloured whiteboard sketches: agent loops, architecture maps, comparisons. Drag the JSON onto excalidraw.com to edit.</p>
+        <span class="tag">.excalidraw</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/browser-build.svg" alt=""></div>
+        <h3>Smart frame ingest</h3>
+        <p>For slide-deck or whiteboard videos, <code>--frames --dense-until</code> samples the first 20 min every 45 sec. The ingest agent reads each frame <em>as an image</em> and extracts structural diagrams (cycles, hierarchies, before/after flows) the transcript flattens to bullets.</p>
+        <span class="tag">--frames</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/chat-check.svg" alt=""></div>
+        <h3>Speaker manual + Word doc</h3>
+        <p>Get a slide-by-slide script, rhetorical hooks designed to land in silence, anticipated audience Q&amp;A, and pacing cues. Export as Markdown or a brand-styled .docx ready to share with stakeholders.</p>
+        <span class="tag">.md + .docx</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/hub-integration.svg" alt=""></div>
+        <h3>Bring your own agent</h3>
+        <p>Every pipeline step runs on the agent CLI you already pay for: <strong>Claude Code</strong> (claude.ai Pro/Max) or <strong>Codex</strong> (ChatGPT). Auto picks whichever is logged in; an explicit pick never silently switches. No API key.</p>
+        <span class="tag">claude &middot; codex</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/layers.svg" alt=""></div>
+        <h3>Knowledge models</h3>
+        <p>A base is a template, not a fixed shape. Choose the Karpathy-style teach-back wiki, a <strong>Second Brain (PARA)</strong> organized for action, or <strong>SOPs-to-Skills</strong> for operational docs. Tune thresholds + agent prompts in the browser.</p>
+        <span class="tag">models/</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/announcement.svg" alt=""></div>
+        <h3>Watched channels</h3>
+        <p>Subscribe a base to YouTube channels: new uploads convert by themselves (queue-for-approval by default; flip a channel to auto-ingest for fully unattended growth). Knowledge that compounds while you sleep.</p>
+        <span class="tag">watcher</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/calendar-schedule.svg" alt=""></div>
+        <h3>Anki flashcards</h3>
+        <p>Atomic, source-cited Q/A cards are authored from the base and rendered to a real <code>.apkg</code> with stable deck IDs. Regenerating <em>updates</em> your deck in Anki instead of duplicating it.</p>
+        <span class="tag">.apkg</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/cog.svg" alt=""></div>
+        <h3>Agent skill library</h3>
+        <p>The SOPs-to-Skills compiler turns a base of procedures into an executable library with one <code>SKILL.md</code> per procedure, policies folded into gotchas, and an <code>AGENTS.md</code> file. It loads in Claude Code <em>and</em> Codex sessions.</p>
+        <span class="tag">SKILL.md + AGENTS.md</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/database-ai.svg" alt=""></div>
+        <h3>Audit trail</h3>
+        <p>Every claim cites its source slug. Open the page, read the original transcript, verify in one click.</p>
+        <span class="tag">log.md</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/loop.svg" alt=""></div>
+        <h3>Re-runnable</h3>
+        <p>Add a new transcript, re-run the generators: every artefact refreshes with new content. No manual editing.</p>
+        <span class="tag">idempotent</span>
+      </div>
+      <div class="feat">
+        <div class="icon"><img src="icons/ai-spark.svg" alt=""></div>
+        <h3>More generators on the way</h3>
+        <p>Notion exports, podcast scripts, social-card carousels, handouts. Each new generator reads the same knowledge base. Write once, teach everywhere.</p>
+        <span class="tag">coming soon</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FILE-TYPES ============ -->
+<section>
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Inputs</div>
+      <h2>Anything you can drop, we can read.</h2>
+      <p>YouTube transcription, OCR for scanned PDFs, transcription for audio &amp; video, full structure for Office and EPUB. One pipeline.</p>
+    </div>
+    <div class="types-grid reveal">
+      <div class="type-card youtube"><span class="ext">YT</span><span class="label">YouTube URL</span></div>
+      <div class="type-card"><span class="ext">PDF</span><span class="label">Document</span></div>
+      <div class="type-card"><span class="ext">DOCX</span><span class="label">Word</span></div>
+      <div class="type-card"><span class="ext">PPTX</span><span class="label">Slides</span></div>
+      <div class="type-card"><span class="ext">XLSX</span><span class="label">Spreadsheet</span></div>
+      <div class="type-card"><span class="ext">EPUB</span><span class="label">Book</span></div>
+      <div class="type-card audio"><span class="ext">MP3</span><span class="label">Audio</span></div>
+      <div class="type-card audio"><span class="ext">WAV</span><span class="label">Audio</span></div>
+      <div class="type-card video"><span class="ext">MP4</span><span class="label">Video</span></div>
+      <div class="type-card"><span class="ext">HTML</span><span class="label">Web page</span></div>
+      <div class="type-card"><span class="ext">MD</span><span class="label">Markdown</span></div>
+      <div class="type-card"><span class="ext">TXT</span><span class="label">Plain text</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Questions</div>
+      <h2>What you might be wondering.</h2>
+    </div>
+    <div class="faq reveal">
+      <details class="q">
+        <summary>What does &ldquo;automatic&rdquo; actually mean?</summary>
+        <p class="answer">A small Python server runs on localhost. Drop a file in the web UI and click Convert, then click Ingest pending. The Studio handles transcript extraction, wiki updates, deck generation, diagram generation, and Word export. No manual editing is required. Every artefact is plain Markdown or JSON, so you can still edit anything by hand.</p>
+      </details>
+      <details class="q">
+        <summary>Does it work offline?</summary>
+        <p class="answer">Conversion and rendering work entirely offline. The ingest step runs on your local agent CLI through Claude Code (Anthropic) or Codex (OpenAI), billed to that subscription. There's no third-party SaaS in the loop.</p>
+      </details>
+      <details class="q">
+        <summary>Which AI subscription do I need?</summary>
+        <p class="answer">Either. The whole pipeline runs on the agent CLI you already pay for: <strong>Claude Code</strong> with a Claude.ai Pro/Max subscription, or <strong>Codex</strong> with a ChatGPT plan. The Agent selector picks automatically (Claude Code first, Codex as fallback), or you can pin one explicitly. An explicit pick fails with the exact login command rather than silently switching. No API keys, no pay-per-token.</p>
+      </details>
+      <details class="q">
+        <summary>Is Karpathy the only knowledge model?</summary>
+        <p class="answer">No. It is one model for building a teach-back wiki from sources, topics, entities, and concepts. <strong>Second Brain (PARA)</strong> organises knowledge around action. <strong>SOPs-to-Skills</strong> compiles procedures into instructions for agents. The registry is open, so new research and operating practices can become reusable models without changing the core pipeline.</p>
+      </details>
+      <details class="q">
+        <summary><span>Marp <em>or</em> PowerPoint?</span></summary>
+        <p class="answer">Both. The Marp pipeline gives you a Markdown source that diffs in git and that agents can edit. The Studio auto-renders it to <strong>HTML, PDF, and PPTX</strong> on every run. The native PPTX renderer builds a real editable PowerPoint with <strong>13 designed slide types</strong>. Every shape, text box, and icon is hand-editable. Use Marp for diff-able source-of-truth decks; use native PPTX when you want to hand off a .pptx someone will actually edit in PowerPoint.</p>
+      </details>
+      <details class="q">
+        <summary>Can I customise the look?</summary>
+        <p class="answer">Yes. The Studio's design picker ships with <strong>Riverfed</strong>, <strong>Heritage</strong>, and <strong>Aurora</strong>: three full palettes + typography sets. Edit any of them in the browser (colour pickers + font fields + live preview) or create a new one from scratch. Edits save as <code>designs/custom/&lt;id&gt;.md</code> following the <a href="https://github.com/google-labs-code/design.md" target="_blank" style="color: var(--accent);">DESIGN.md spec</a>. Reset to default at any time. The chosen design's tokens flow into the renderer so every generated artefact uses the same palette.</p>
+      </details>
+      <details class="q">
+        <summary>What about whiteboard / Excalidraw videos?</summary>
+        <p class="answer">Chapter-start frames usually catch the canvas while it's still blank. The <code>--dense-until</code> mode samples a frame every 45 seconds for the first 20 minutes (configurable) and auto-flags each one as vision-relevant. The ingest agent then reads each flagged JPEG <em>as an image</em> (not just the OCR text: Excalidraw text reliably OCRs to gibberish) and extracts the structural diagrams. The wiki source page gets a <code>## Visual architecture</code> section citing each frame's timestamp.</p>
+      </details>
+      <details class="q">
+        <summary>What generators ship today, and what&rsquo;s next?</summary>
+        <p class="answer">Live now: <strong>Marp decks</strong> (auto-rendered to HTML/PDF/PPTX), <strong>native editable PowerPoint</strong> (13 slide types), <strong>Excalidraw diagrams</strong>, <strong>speaker manuals</strong> (markdown + styled Word doc), <strong>Anki flashcard decks</strong> for spaced repetition, an <strong>agent skill library</strong> compiler (SOPs in, executable SKILL.md + AGENTS.md out), plus a <strong>design picker</strong> that styles all of them. Next on the roadmap: Notion exports, podcast scripts, social-card carousels, handouts. Each new generator reads the same wiki: add one, get a new output across your whole knowledge base.</p>
+      </details>
+      <details class="q">
+        <summary>Who's it for?</summary>
+        <p class="answer">Builders, founders, researchers, and lifelong learners. Anyone who consumes more knowledge than they can recall and wants that consumption to start <em>working for them</em>. It is especially useful if you teach, present, or write because the deck and speaker manual save days.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section id="cta">
+  <div class="container">
+    <div class="final reveal">
+      <h2>Start your <span class="accent-text">knowledge base</span> in 60 seconds.</h2>
+      <p>Choose a model, drop a source, and turn it into connected knowledge your team, your training, and your agents can use.</p>
+      <a href="/" class="primary">Open the converter →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container row">
+    <div class="mono">Riverfed · v0.1 · localhost</div>
+    <div id="footerLiveSummary">Built from the live main knowledge base, a growing model registry, and one local Studio.</div>
+  </div>
+</footer>
+
+<script>
+  (() => {
+    const MAIN_WIKI_SLUG = "wiki";
+    const stats = document.getElementById("liveWikiStats");
+    const status = document.getElementById("liveWikiStatus");
+    const catalogue = document.getElementById("modelCatalogue");
+    const footer = document.getElementById("footerLiveSummary");
+
+    const cleanCopy = (value) => String(value || "")
+      .replace(/\s*\u2014\s*/g, ", ")
+      .replace(/\s*\u00e2\u20ac\u201d\s*/g, ", ")
+      .replace(/&(?:#0*8212|#x0*2014|mdash);/gi, ", ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
+    const humanise = (value) => String(value || "")
+      .replace(/[_-]+/g, " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+    const singularise = (value) => {
+      const word = String(value || "");
+      if (word.endsWith("ies")) return `${word.slice(0, -3)}y`;
+      if (word.endsWith("s") && !word.endsWith("ss")) return word.slice(0, -1);
+      return word;
+    };
+
+    const replaceChildren = (node, children) => {
+      node.replaceChildren(...children);
+      node.setAttribute("aria-busy", "false");
+    };
+
+    const statCard = (count, label) => {
+      const card = document.createElement("div");
+      card.className = "num";
+      const value = document.createElement("div");
+      value.className = "big";
+      value.textContent = String(count);
+      const caption = document.createElement("div");
+      caption.className = "label";
+      caption.textContent = label;
+      card.append(value, caption);
+      return card;
+    };
+
+    const fetchJson = async (path) => {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) throw new Error(`${path} returned ${response.status}`);
+      return response.json();
+    };
+
+    const renderModels = (models) => {
+      const rows = models.map((model) => {
+        const row = document.createElement("article");
+        row.className = "model-row";
+
+        const body = document.createElement("div");
+        const title = document.createElement("h3");
+        title.textContent = cleanCopy(model.name) || humanise(model.id);
+        const description = document.createElement("p");
+        description.textContent = cleanCopy(model.description) || "A reusable knowledge model.";
+        body.append(title, description);
+
+        const meta = document.createElement("div");
+        meta.className = "model-meta";
+        const folders = Array.isArray(model.folders)
+          ? model.folders.map((folder) => humanise(folder.name)).join(" · ")
+          : "Defined by model";
+        const generators = Array.isArray(model.generators) && model.generators.length
+          ? model.generators.map(humanise).join(" · ")
+          : "Model-specific";
+        meta.textContent = `FOLDERS\n${folders}\n\nOUTPUTS\n${generators}`;
+        meta.style.whiteSpace = "pre-line";
+
+        row.append(body, meta);
+        return row;
+      });
+      replaceChildren(catalogue, rows.length
+        ? rows
+        : [Object.assign(document.createElement("div"), {
+            className: "model-loading",
+            textContent: "No knowledge models are registered yet."
+          })]);
+    };
+
+    const renderWiki = (wiki, models) => {
+      const entries = Object.entries(wiki.counts || {});
+      const cards = entries.map(([folder, count]) => {
+        const label = folder === "sources"
+          ? "Sources captured"
+          : `${humanise(singularise(folder))} pages`;
+        return statCard(count, label);
+      });
+      replaceChildren(stats, cards.length
+        ? cards
+        : [statCard(0, "Pages in main wiki")]);
+
+      const matchingModel = models.find((model) => model.id === wiki.model);
+      const modelName = cleanCopy(matchingModel?.name) || humanise(wiki.model);
+      const pageTotal = entries.reduce((sum, [, count]) => sum + Number(count || 0), 0);
+      status.textContent = `Live from ${cleanCopy(wiki.name) || "the main wiki"} · ${modelName}`;
+      footer.textContent = `${pageTotal} live pages in the main knowledge base · ${modelName} · ${models.length} registered knowledge models`;
+    };
+
+    const renderFilePreview = () => {
+      replaceChildren(stats, [statCard("Live", "Open through the local Studio")]);
+      status.replaceChildren();
+      const link = document.createElement("a");
+      link.href = "http://127.0.0.1:8765/about";
+      link.textContent = "Open the live About page";
+      status.append(link, " to read the main wiki and model registry.");
+      replaceChildren(catalogue, [Object.assign(document.createElement("div"), {
+        className: "model-loading",
+        textContent: "The model registry is available when Riverfed is running on localhost."
+      })]);
+    };
+
+    const loadLiveAbout = async () => {
+      if (window.location.protocol === "file:") {
+        renderFilePreview();
+        return;
+      }
+
+      const [wikiResult, modelResult] = await Promise.allSettled([
+        fetchJson("/wikis"),
+        fetchJson("/api/models")
+      ]);
+
+      const models = modelResult.status === "fulfilled" && modelResult.value.success !== false
+        ? modelResult.value.models || []
+        : [];
+
+      if (modelResult.status === "fulfilled") {
+        renderModels(models);
+      } else {
+        replaceChildren(catalogue, [Object.assign(document.createElement("div"), {
+          className: "model-loading",
+          textContent: "The knowledge model registry is temporarily unavailable."
+        })]);
+      }
+
+      const wikis = wikiResult.status === "fulfilled" ? wikiResult.value.wikis || [] : [];
+      const mainWiki = wikis.find((wiki) => wiki.slug === MAIN_WIKI_SLUG);
+      if (mainWiki) {
+        renderWiki(mainWiki, models);
+      } else {
+        replaceChildren(stats, [statCard("Offline", "Main wiki figures unavailable")]);
+        status.textContent = "Start the local Studio to read the main knowledge base.";
+      }
+    };
+
+    loadLiveAbout().catch(() => {
+      replaceChildren(stats, [statCard("Offline", "Live figures unavailable")]);
+      status.textContent = "Start the local Studio to read the main knowledge base.";
+      replaceChildren(catalogue, [Object.assign(document.createElement("div"), {
+        className: "model-loading",
+        textContent: "The knowledge model registry is temporarily unavailable."
+      })]);
+    });
+  })();
+</script>
+
+</body>
+</html>

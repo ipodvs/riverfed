@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "riverfed-app",
+      "runtimeExecutable": "./.venv/Scripts/python.exe",
+      "runtimeArgs": ["server.py"],
+      "port": 8765
+    },
+    {
+      "name": "riverfed-landing",
+      "runtimeExecutable": "./.venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "http.server", "8787", "--directory", "./landing"],
+      "port": 8787
+    }
+  ]
+}

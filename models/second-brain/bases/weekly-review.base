@@ -1,0 +1,64 @@
+# PARA fails in practice at exactly one point: when the weekly review lapses.
+# This turns that discipline into a checklist. Each view is a question the
+# review has to answer, in the order it should be answered.
+filters:
+  or:
+    - file.hasTag("wiki/projects")
+    - file.hasTag("wiki/areas")
+    - file.hasTag("wiki/archives")
+
+properties:
+  outcome:
+    displayName: Outcome
+  status:
+    displayName: Status
+  last_updated:
+    displayName: Updated
+
+views:
+  # A project with an end state that hasn't moved in two weeks is either
+  # finished, blocked, or abandoned — and each needs a different decision.
+  - type: table
+    name: "Stalled projects (14+ days)"
+    filters:
+      and:
+        - file.hasTag("wiki/projects")
+        - 'status != "done"'
+        - '(today() - date(last_updated)).days > 14'
+    order:
+      - file.name
+      - status
+      - outcome
+      - last_updated
+
+  # SCHEMA rule: done -> move to archives/. Anything matching here is a page
+  # sitting in the wrong layer, which is how a PARA base rots.
+  - type: table
+    name: "Done — needs archiving"
+    filters:
+      and:
+        - file.hasTag("wiki/projects")
+        - 'status == "done"'
+    order:
+      - file.name
+      - outcome
+      - last_updated
+
+  - type: table
+    name: "Areas drifting (30+ days)"
+    filters:
+      and:
+        - file.hasTag("wiki/areas")
+        - '(today() - date(last_updated)).days > 30'
+    order:
+      - file.name
+      - last_updated
+
+  - type: table
+    name: "Archive"
+    filters:
+      and:
+        - file.hasTag("wiki/archives")
+    order:
+      - file.name
+      - last_updated

@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge · Riverfed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"></noscript>
+<style>
+  :root {
+    /* "Porcelain" light theme (2026-07 redesign): see index.html tokens. */
+    --bg:           #f7f8fa;
+    --bg-elevated:  #eef1f5;
+    --bg-card:      #ffffff;
+    --bg-card-2:    #fbfcfd;
+    --border:       #e2e5eb;
+    --border-soft:  #eaedf2;
+    --text:         #15171c;
+    --text-muted:   #5c6470;
+    --text-dim:     #7d8490;
+    --accent:       #157347;
+    --accent-glow:  #1f9dd9;
+    --neural:       #6a48d7;
+    --saber-green:  #1d9e66;
+    --saber-yellow: #8a6100;
+    --saber-orange: #cf4e14;
+    /* Legacy gradient tokens, now SOLID: one accent, zero gradients. */
+    --grad:         #157347;
+    --grad-cta:     #157347;
+    --grad-cta-hover: #115d3a;
+    --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono:    'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+    --mono:         var(--font-mono);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100vh; overflow-x: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* === LAYOUT === */
+  .container { max-width: 1480px; margin: 44px auto 0; padding: 0 clamp(20px, 4vw, 56px); }
+
+  /* === HEADER (eyebrow + h1 + lede + stat grid) === */
+  .header {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 48px; align-items: start;
+    margin-bottom: 36px;
+  }
+  @media (max-width: 980px) { .header { grid-template-columns: 1fr; } }
+  .header .eyebrow {
+    color: var(--text-muted); font-family: var(--mono);
+    font-size: 13px; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; margin: 0 0 12px;
+  }
+  .header h1 {
+    margin: 0 0 16px; font-size: clamp(32px, 4vw, 44px);
+    font-weight: 700; letter-spacing: -0.025em; line-height: 1.1;
+    text-wrap: balance;
+  }
+  .header .lede {
+    color: var(--text-muted); font-size: 17px; line-height: 1.55;
+    max-width: 56ch; margin: 0;
+  }
+  .header .stats {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px; min-width: 320px;
+  }
+  .stat-tile {
+    padding: 22px 24px; border-radius: 10px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(21,23,28,0.03);
+  }
+  .stat-tile .n {
+    display: block; font-size: 36px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em; line-height: 1;
+    color: var(--text);
+  }
+  .stat-tile .label {
+    display: block; margin-top: 8px;
+    color: var(--text-muted); font-family: var(--mono);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* === SEARCH BAR === */
+  .search-bar {
+    display: flex; gap: 12px; align-items: stretch;
+    margin-bottom: 24px;
+  }
+  .search-bar input {
+    flex: 1; padding: 14px 22px;
+    background: var(--bg-card); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 15px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .search-bar input::placeholder { color: var(--text-dim); }
+  .search-bar input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(21, 115, 71,0.14);
+  }
+  .toggle-group {
+    display: inline-flex; padding: 4px; gap: 0;
+    background: var(--bg-elevated); border: none;
+    border-radius: 999px;
+  }
+  .toggle-group button {
+    padding: 10px 18px; border: none; background: transparent;
+    color: var(--text-muted); font-family: var(--mono);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.16em;
+    border-radius: 999px; cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+  .toggle-group button.active {
+    color: var(--text); background: var(--bg-card);
+    box-shadow: 0 1px 2px rgba(21,23,28,0.08);
+  }
+
+  /* === MAIN GRID (sidebar + main) === */
+  .main-grid {
+    display: grid; grid-template-columns: 320px 1fr;
+    gap: 24px; align-items: start;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 28px;
+  }
+  @media (max-width: 980px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* Sidebar: one card per browsable model folder. Accent colours cycle
+     by section index (acc-0..3) so any model gets distinct counts. */
+  .sidebar-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin-bottom: 18px;
+    box-shadow: 0 1px 2px rgba(21,23,28,0.03);
+  }
+  .sidebar-card .label {
+    color: var(--text-muted); font-family: var(--mono);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; margin: 0 0 12px;
+  }
+  .sidebar-card ul { list-style: none; margin: 0; padding: 0; }
+  .sidebar-card li {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 8px; border-radius: 6px;
+    color: var(--text); font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .sidebar-card li:hover { background: var(--bg-elevated); }
+  .sidebar-card li .count {
+    color: var(--saber-yellow); font-family: var(--mono);
+    font-size: 13px; font-weight: 700;
+  }
+  .sidebar-card.acc-1 li .count { color: var(--saber-green); }
+  .sidebar-card.acc-2 li .count { color: var(--saber-orange); }
+  .sidebar-card.acc-3 li .count { color: var(--neural); }
+
+  /* === MAIN AREA === */
+  .main-area { min-width: 0; }
+
+  /* Section header */
+  .section-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: 0 4px 16px;
+  }
+  .section-head h2 { margin: 0; font-size: 22px; font-weight: 700; }
+  .section-head .meta {
+    color: var(--text-dim); font-family: var(--mono); font-size: 13px;
+  }
+
+  /* Item card (expanded): callout accent cycles with the section index */
+  .item-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 30px 32px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 2px rgba(21,23,28,0.03);
+  }
+  .item-card .row1 {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px; gap: 16px; flex-wrap: wrap;
+  }
+  .item-card h3 {
+    margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.01em;
+  }
+  .item-card .meta { display: inline-flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .item-card .pill {
+    padding: 5px 12px; border-radius: 100px;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    color: var(--text-muted); font-family: var(--mono);
+    font-size: 12px; font-weight: 500;
+  }
+  .item-card .open-btn {
+    padding: 5px 14px; border-radius: 100px;
+    border: 1px solid var(--accent); background: transparent;
+    color: var(--accent); font-family: var(--mono);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+    cursor: pointer; text-decoration: none;
+  }
+  .item-card .open-btn:hover { background: rgba(21, 115, 71,0.06); }
+  .item-card p { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin: 0 0 16px; }
+  .item-card .callout {
+    border-left: 3px solid var(--saber-green);
+    background: rgba(29,158,102,0.05);
+    padding: 14px 18px; border-radius: 0 8px 8px 0;
+    color: var(--text); font-size: 14px; line-height: 1.55;
+    margin: 0 0 18px;
+  }
+  .item-card.acc-1 .callout { border-left-color: var(--saber-yellow); background: rgba(138,97,0,0.05); }
+  .item-card.acc-2 .callout { border-left-color: var(--saber-orange); background: rgba(207,78,20,0.05); }
+  .item-card.acc-3 .callout { border-left-color: var(--accent); background: rgba(21, 115, 71,0.05); }
+  .item-card .source-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  }
+  @media (max-width: 720px) { .item-card .source-row { grid-template-columns: 1fr; } }
+  .src-card {
+    padding: 14px 16px; border-radius: 10px;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+  }
+  .src-card .ttl { color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.35; }
+  .src-card .channel {
+    margin-top: 6px; color: var(--text-dim); font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .empty {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-dim);
+  }
+
+  /* === Wiki picker + tabs === */
+  .toolbar {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .toolbar .wiki-picker {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 8px 18px; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--border);
+  }
+  .toolbar .wiki-picker label {
+    color: var(--text-muted); font-family: var(--mono);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .toolbar .wiki-picker select {
+    background: transparent; color: var(--text);
+    border: none; font-family: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; padding: 4px 8px 4px 4px;
+  }
+  .toolbar .wiki-picker select:focus { outline: none; }
+  .toolbar .wiki-picker .counts {
+    color: var(--text-dim); font-family: var(--mono); font-size: 12px;
+  }
+  .tabs {
+    display: inline-flex; gap: 0; padding: 4px;
+    background: var(--bg-elevated); border: none;
+    border-radius: 999px;
+  }
+  .tabs button {
+    padding: 8px 20px; border: none; background: transparent;
+    color: var(--text-muted); font-family: var(--mono);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+    border-radius: 999px; cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+  .tabs button.active {
+    color: var(--text); background: var(--bg-card);
+    box-shadow: 0 1px 2px rgba(21,23,28,0.08);
+  }
+
+  /* === Graph view === */
+  .graph-wrap {
+    display: none;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    margin-top: 18px; position: relative;
+    box-shadow: 0 1px 2px rgba(21,23,28,0.03);
+  }
+  .graph-wrap.active { display: block; }
+  #graph { width: 100%; height: 720px; }
+  .graph-legend {
+    position: absolute; left: 18px; bottom: 18px;
+    display: flex; gap: 14px; flex-wrap: wrap;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(8px);
+    padding: 10px 14px; border-radius: 10px;
+    border: 1px solid var(--border-soft);
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+  .graph-legend .leg {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--text-muted);
+  }
+  .graph-legend .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .graph-stats {
+    position: absolute; right: 18px; top: 18px;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(8px);
+    padding: 8px 12px; border-radius: 8px;
+    border: 1px solid var(--border-soft);
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  footer {
+    margin-top: 60px; padding: 24px 0 40px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--text-dim); font-size: 13px; text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div data-pa-nav></div>
+<script>
+  (function loadSharedNav() {
+    const script = document.createElement("script");
+    script.src = location.protocol === "file:" ? "nav.js" : "/nav.js";
+    script.defer = true;
+    document.head.appendChild(script);
+  }());
+</script>
+
+<div class="container">
+
+  <div class="header">
+    <div>
+      <p class="eyebrow">Knowledge map</p>
+      <h1>Explore your knowledge base by topic, source, and teaching asset.</h1>
+      <p class="lede" id="lede">Loading your knowledge…</p>
+    </div>
+    <!-- Tiles render from the vault's model folders (karpathy: sources/
+         topics/entities/concepts; PARA: projects/areas/…; ops: procedures/
+         policies/runbooks): see renderAll(). -->
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="wiki-picker">
+      <label for="wikiSelect">Knowledge</label>
+      <select id="wikiSelect" aria-label="Source knowledge base"><option value="wiki">Knowledge</option></select>
+      <span class="counts" id="wikiCounts"></span>
+    </div>
+    <div class="tabs" role="tablist">
+      <button data-view="map" class="active" id="btnMap">MAP</button>
+      <button data-view="graph" id="btnGraph">GRAPH</button>
+    </div>
+  </div>
+
+  <!-- The mode toggle, sidebar sections, and search placeholder are all
+       generated from the vault's knowledge model (its browsable folders +
+       search_hint): karpathy renders TOPICS|CONCEPTS, an ops base renders
+       PROCEDURES|POLICIES|RUNBOOKS, with zero server edits per model. -->
+  <div class="search-bar" id="searchBar">
+    <input id="search" type="text" placeholder="Search…">
+    <div class="toggle-group" role="tablist" id="modeToggle"></div>
+  </div>
+
+  <div class="graph-wrap" id="graphWrap">
+    <div id="graph"></div>
+    <div class="graph-stats" id="graphStats">0 nodes · 0 links</div>
+    <div class="graph-legend" id="graphLegend"></div>
+  </div>
+
+  <div class="main-grid" id="mapView">
+
+    <aside id="sidebar"></aside>
+
+    <div class="main-area">
+
+      <div class="section-head">
+        <h2 id="mainHeading">&nbsp;</h2>
+        <span class="meta" id="mainCount">0 shown</span>
+      </div>
+      <div id="mainList"></div>
+
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Riverfed · the wiki view is generated live from the selected base's knowledge-model folders
+</footer>
+
+<script src="https://unpkg.com/force-graph@1.43"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const normalizeCopy = (s) => String(s ?? '')
+    .replace(/\s*\u2014\s*/g, ', ')
+    .replace(/\s*\u00e2\u20ac\u201d\s*/g, ', ')
+    .replace(/&(?:#0*8212|#x0*2014|mdash);/gi, ', ');
+  const escapeHtml = (s) => normalizeCopy(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  // Vault pages are served by the local server (vaults can live outside
+  // the repo since the C1 split, so GitHub links can't reach them).
+  const pageUrl = (folder, slug) =>
+    '/vault/page?wiki=' + encodeURIComponent(currentWiki) +
+    '&file=' + encodeURIComponent(folder + '/' + slug + '.md');
+
+  let DATA = null;
+  let SECTIONS = [];           // DATA.sections: the model's browsable folders
+  let GRAPH = null;            // force-graph instance
+  let mode = null;             // current section's folder name
+  let view = 'map';            // 'map' | 'graph'
+  let filterQuery = '';
+  let highlightSlug = null;
+  let currentWiki = 'wiki';
+  let WIKIS = [];
+
+  // Node colours assigned per model: the capture/source kind keeps brand
+  // blue; remaining kinds cycle the saber palette in manifest order (so
+  // karpathy's topic/entity/concept land on green/orange/gold exactly
+  // as before). Hues darkened to stay legible on the light canvas.
+  const SOURCE_COLOR = '#157347';
+  const KIND_PALETTE = ['#1d9e66', '#cf4e14', '#d9a400', '#6a48d7', '#1f9dd9', '#d4547d'];
+  let kindColor = {};
+  function buildKindColors(kinds) {
+    kindColor = {};
+    let i = 0;
+    for (const k of (kinds || [])) {
+      kindColor[k.kind] = k.kind === 'source'
+        ? SOURCE_COLOR
+        : KIND_PALETTE[i++ % KIND_PALETTE.length];
+    }
+  }
+  const colorFor = (kind) => kindColor[kind] || '#8a919d';
+
+  async function loadWikis() {
+    try {
+      const r = await fetch('/wikis');
+      const j = await r.json();
+      WIKIS = j.wikis || [];
+      const sel = $('wikiSelect');
+      sel.innerHTML = WIKIS.map(w =>
+        `<option value="${escapeHtml(w.slug)}">${escapeHtml(w.name)} (${escapeHtml(w.path)}/)</option>`
+      ).join('');
+      sel.value = currentWiki;
+      sel.addEventListener('change', () => {
+        currentWiki = sel.value;
+        highlightSlug = null;
+        mode = null;           // re-resolved from the new vault's model
+        load();
+        if (view === 'graph') loadGraph();
+      });
+    } catch (e) { /* swallow */ }
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('/wiki/data?wiki=' + encodeURIComponent(currentWiki));
+      DATA = await res.json();
+      if (!DATA.available) { $('lede').textContent = 'No wiki found at ' + currentWiki + '/'; return; }
+      SECTIONS = DATA.sections || [];
+      if (!SECTIONS.some(s => s.folder === mode)) {
+        mode = SECTIONS.length ? SECTIONS[0].folder : null;
+      }
+      renderAll();
+      updateWikiCounts();
+      // A model with no browsable folders at all: the graph IS the
+      // browsing UI.
+      if (!SECTIONS.length && view === 'map') {
+        setView('graph');
+      }
+    } catch (e) {
+      $('lede').textContent = 'Could not reach the server (' + e.message + ').';
+    }
+  }
+
+  function updateWikiCounts() {
+    // counts keys come from the vault's knowledge model: render whatever
+    // folders it actually has.
+    const c = DATA.counts || {};
+    $('wikiCounts').textContent = Object.entries(c)
+      .map(([k, n]) => `${n} ${k === 'sources' ? 'src' : k}`)
+      .join(' · ');
+  }
+
+  function renderAll() {
+    const c = DATA.counts || {};
+    $('stats').innerHTML = Object.entries(c).map(([k, n]) =>
+      `<div class="stat-tile"><span class="n">${n}</span>` +
+      `<span class="label">${escapeHtml(cap(k))}</span></div>`
+    ).join('');
+
+    if (c.topics !== undefined && c.concepts !== undefined) {
+      $('lede').textContent =
+        `This vault currently holds ${c.sources} curated sources across ${c.topics} topics, ` +
+        `with ${c.concepts} cross-cutting concepts.`;
+    } else {
+      const parts = Object.entries(c).filter(([k]) => k !== 'sources')
+        .map(([k, n]) => `${n} ${k}`);
+      $('lede').textContent =
+        `This base currently holds ${c.sources ?? 0} curated sources, ` +
+        `organized into ${parts.join(', ') || 'its model folders'}.`;
+    }
+
+    $('search').placeholder = 'Search ' + (DATA.search_hint || 'pages');
+    renderModeToggle();
+    renderSidebar();
+    renderMain();
+  }
+
+  function syncModeButtons() {
+    document.querySelectorAll('#modeToggle button').forEach(b =>
+      b.classList.toggle('active', b.dataset.mode === mode));
+  }
+
+  function renderModeToggle() {
+    $('modeToggle').innerHTML = SECTIONS.map(s =>
+      `<button data-mode="${escapeHtml(s.folder)}">${escapeHtml(s.folder.toUpperCase())}</button>`
+    ).join('');
+    $('modeToggle').querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        mode = b.dataset.mode;
+        highlightSlug = null;
+        syncModeButtons();
+        renderMain();
+      });
+    });
+    syncModeButtons();
+  }
+
+  function renderSidebar() {
+    $('sidebar').innerHTML = SECTIONS.map((s, i) => `
+      <div class="sidebar-card acc-${i % 4}">
+        <p class="label">${escapeHtml(cap(s.folder))}</p>
+        <ul>${s.items.map(it => `
+          <li data-folder="${escapeHtml(s.folder)}" data-slug="${escapeHtml(it.slug)}">
+            <span>${escapeHtml(it.name)}</span>
+            <span class="count">${it.source_count}</span>
+          </li>`).join('')}</ul>
+      </div>`).join('');
+    document.querySelectorAll('.sidebar-card li').forEach(li => {
+      li.addEventListener('click', () => {
+        mode = li.dataset.folder;
+        highlightSlug = li.dataset.slug;
+        syncModeButtons();
+        renderMain();
+        // Scroll to the highlighted item
+        setTimeout(() => {
+          const el = document.querySelector(`[data-item-slug="${highlightSlug}"]`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 30);
+      });
+    });
+  }
+
+  function renderMain() {
+    const secIdx = SECTIONS.findIndex(s => s.folder === mode);
+    const sec = secIdx >= 0 ? SECTIONS[secIdx] : null;
+    const items = sec ? sec.items : [];
+    const q = filterQuery.toLowerCase().trim();
+    const filtered = q ? items.filter(it => {
+      const hay = (it.name || '') + ' ' + (it.description || '') + ' ' + (it.callout || '');
+      return hay.toLowerCase().includes(q);
+    }) : items;
+    // If highlightSlug is set and not in filtered, ignore the filter for that one
+    const ordered = highlightSlug
+      ? [...filtered.filter(it => it.slug === highlightSlug),
+         ...filtered.filter(it => it.slug !== highlightSlug)]
+      : filtered;
+
+    $('mainHeading').textContent = sec ? cap(sec.folder) : '';
+    $('mainCount').textContent = `${filtered.length} shown`;
+
+    if (filtered.length === 0) {
+      $('mainList').innerHTML = '<div class="empty">No matches.</div>';
+      return;
+    }
+
+    const klass = `item-card acc-${secIdx % 4}`;
+    $('mainList').innerHTML = ordered.map(it => {
+      const sources = (it.sources || []).slice(0, 3).map(slug => {
+        const s = DATA.sources_by_slug[slug];
+        if (!s) return `<div class="src-card"><div class="ttl">${escapeHtml(slug)}</div></div>`;
+        return `<div class="src-card">
+          <div class="ttl">${escapeHtml(s.title)}</div>
+          ${s.channel ? `<div class="channel">${escapeHtml(s.channel)}</div>` : ''}
+        </div>`;
+      }).join('');
+      return `
+        <div class="${klass}" data-item-slug="${escapeHtml(it.slug)}">
+          <div class="row1">
+            <h3>${escapeHtml(it.name)}</h3>
+            <div class="meta">
+              <span class="pill">${it.source_count} sources</span>
+              ${it.last_updated ? `<span class="pill">${escapeHtml(it.last_updated)}</span>` : ''}
+              <a class="open-btn" href="${pageUrl(mode, it.slug)}" target="_blank">OPEN MD</a>
+            </div>
+          </div>
+          ${it.description ? `<p>${escapeHtml(it.description)}</p>` : ''}
+          ${it.callout ? `<div class="callout">${escapeHtml(it.callout)}</div>` : ''}
+          ${sources ? `<div class="source-row">${sources}</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  // Search input
+  $('search').addEventListener('input', (e) => {
+    filterQuery = e.target.value;
+    highlightSlug = null;  // search clears any sidebar focus
+    renderMain();
+  });
+
+  // === Map / Graph tabs ===
+  function setView(next) {
+    view = next;
+    $('btnMap').classList.toggle('active', view === 'map');
+    $('btnGraph').classList.toggle('active', view === 'graph');
+    $('mapView').style.display = view === 'map' ? '' : 'none';
+    $('searchBar').style.display = view === 'map' ? '' : 'none';
+    $('graphWrap').classList.toggle('active', view === 'graph');
+    if (view === 'graph' && !GRAPH) loadGraph();
+    if (view === 'graph' && GRAPH) {
+      // Trigger a resize since the container was display:none before
+      const w = $('graphWrap').clientWidth;
+      GRAPH.width(w).height(720);
+    }
+  }
+  $('btnMap').addEventListener('click', () => setView('map'));
+  $('btnGraph').addEventListener('click', () => setView('graph'));
+
+  // === Force-graph (Obsidian-style knowledge graph) ===
+  async function loadGraph() {
+    try {
+      const r = await fetch('/wiki/graph?wiki=' + encodeURIComponent(currentWiki));
+      const g = await r.json();
+      if (!g.available) return;
+      buildKindColors(g.kinds);
+      $('graphStats').textContent = `${g.counts.nodes} nodes · ${g.counts.links} links`;
+      $('graphLegend').innerHTML = (g.kinds || []).map(k =>
+        `<span class="leg"><span class="dot" style="background:${colorFor(k.kind)}"></span>${escapeHtml(k.kind.toUpperCase())}</span>`
+      ).join('');
+      const container = $('graph');
+      container.innerHTML = '';
+      GRAPH = ForceGraph()(container)
+        .width(container.clientWidth || 1200)
+        .height(720)
+        .backgroundColor('#f7f8fa')
+        .nodeId('id')
+        .nodeVal(n => n.val * 1.5)
+        .nodeLabel(n => `${n.kind.toUpperCase()}: ${n.label}`)
+        .nodeColor(n => colorFor(n.kind))
+        .linkColor(() => 'rgba(21,23,28,0.12)')
+        .linkDirectionalParticles(0)
+        .linkWidth(0.5)
+        .nodeCanvasObject((node, ctx, scale) => {
+          // Custom: dot + label that fades in when zoomed
+          const size = Math.max(2, Math.sqrt(node.val) * 2);
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
+          ctx.fillStyle = colorFor(node.kind);
+          ctx.fill();
+          if (scale > 1.2) {
+            const fontSize = Math.max(2, 11 / Math.max(0.8, scale * 0.7));
+            ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = 'rgba(21,23,28,0.78)';
+            const label = node.label.length > 32 ? node.label.slice(0, 30) + '…' : node.label;
+            ctx.fillText(label, node.x, node.y + size + 2);
+          }
+        })
+        .onNodeClick(node => {
+          const sec = SECTIONS.find(s => s.kind === node.kind);
+          if (sec) {
+            // Browsable kind: jump back to map view and scroll to that card
+            setView('map');
+            mode = sec.folder;
+            highlightSlug = node.slug;
+            syncModeButtons();
+            renderMain();
+            setTimeout(() => {
+              const el = document.querySelector(`[data-item-slug="${node.slug}"]`);
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+          } else {
+            // Non-browsable kind (sources, karpathy entities): open the page file
+            const folder = node.folder || node.kind + 's';
+            window.open(pageUrl(folder, node.slug), '_blank');
+          }
+        })
+        .d3AlphaDecay(0.02)
+        .d3VelocityDecay(0.35)
+        .cooldownTicks(120);
+      GRAPH.graphData({ nodes: g.nodes, links: g.links });
+    } catch (e) {
+      $('graphStats').textContent = 'graph load failed: ' + e.message;
+    }
+  }
+  // Resize handler
+  window.addEventListener('resize', () => {
+    if (GRAPH && view === 'graph') {
+      GRAPH.width($('graphWrap').clientWidth).height(720);
+    }
+  });
+
+  loadWikis();
+  load();
+</script>
+</body>
+</html>

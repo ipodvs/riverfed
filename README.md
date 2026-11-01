@@ -463,28 +463,6 @@ Bases are a **lens, never a source of truth** — they hold no knowledge,
 only view config, and read the same frontmatter the `/wiki` browser route
 reads. Nothing outside Obsidian parses them.
 
-### Publishing a private wiki to ENGE.WRITER
-
-When this local server is running, ENGE.WRITER can discover the wiki shelf
-and copy one deliberate, versioned snapshot through two loopback-only routes:
-
-- `GET /api/writer/libraries` lists local vaults and page counts.
-- `GET /api/writer/knowledge-pack?wiki=<slug>` publishes the selected vault as
-  `enge.knowledge-pack` version 1.
-
-The bridge is browser-local: Riverfed remains bound to `127.0.0.1`, while the
-Writer browser session sends the selected pack into its private workspace.
-Only loopback development origins and the hosted Writer origins listed in
-`RIVERFED_WRITER_ORIGINS` (comma-separated, in `.env`) receive CORS access. The publisher caps a snapshot at 500 pages and each page body at
-12,000 characters.
-
-Knowledge Pack pages are guidance, not sources, evidence, or story canon.
-`procedure` and `policy` pages default to the `craft` lane; all other page kinds
-default to `research`. Set `writer_lane: craft` or `writer_lane: research` in a
-page's frontmatter to override that mapping. Writer never follows later wiki
-changes silently: the author must explicitly refresh the connected snapshot,
-and pages already selected into a project remain immutable copies.
-
 ### Adding new transcripts to the wiki
 
 The wiki grows automatically. Two ways to trigger ingest:

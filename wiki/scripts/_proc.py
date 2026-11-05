@@ -26,10 +26,21 @@ def kill_tree(pid: int, creationflags: int = 0) -> None:
             creationflags=creationflags,
         )
     else:
+        import os
+        import signal
         try:
-            import os
-            import signal
-            os.killpg(os.getpgid(pid), signal.SIGKILL)
+            pgid = os.getpgid(pid)
+        except Exception:
+            return
+        try:
+            if pgid == os.getpgrp():
+                # The child shares OUR group (it was not started by
+                # run_streaming). killpg here would SIGKILL the caller too —
+                # that is how a timed-out watcher sweep took the server down
+                # every 50 minutes. Kill only the child.
+                os.kill(pid, signal.SIGKILL)
+            else:
+                os.killpg(pgid, signal.SIGKILL)
         except Exception:
             pass
 
@@ -64,6 +75,9 @@ def run_streaming(
         cwd=cwd,
         env=env,
         creationflags=creationflags,
+        # POSIX: the child leads its own process group, so kill_tree's killpg
+        # reaches the child's descendants and never the caller.
+        start_new_session=sys.platform != "win32",
     )
 
     stdout_lines: list[str] = []

@@ -2322,7 +2322,27 @@ class Handler(BaseHTTPRequestHandler):
         })
 
 
+def should_open_browser() -> bool:
+    """Open a tab only when a person started the server from a terminal.
+
+    launchd, the watchdogs and the start.command / start.vbs launchers run the
+    server with no terminal attached (and the launchers open the page
+    themselves), so a crash-restart must not pop a new browser window.
+    RIVERFED_NO_BROWSER=1 opts out even from a terminal.
+    """
+    if os.environ.get("RIVERFED_NO_BROWSER", "").strip().lower() in {"1", "true", "yes"}:
+        return False
+    stdin = sys.stdin
+    try:
+        return bool(stdin is not None and stdin.isatty())
+    except (AttributeError, ValueError, OSError):
+        return False
+
+
 def open_browser_when_ready(url: str) -> None:
+    if not should_open_browser():
+        return
+
     def _open():
         webbrowser.open(url)
     threading.Timer(0.6, _open).start()

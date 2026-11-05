@@ -49,6 +49,15 @@ CONVERT = PROJECT_DIR / "convert.py"
 UPLOADS_PER_CHECK = 10        # newest N uploads examined per sweep
 SEEN_CAP = 400                # per-subscription seen-id memory
 HISTORY_CAP = 100             # vault-level capture-history memory
+CONVERT_TIMEOUT_SEC = 900     # per-video convert cap
+# The server kills a sweep job at 45 min. Stop STARTING conversions once a
+# new one could run past this budget, so the sweep always finishes on its own
+# and writes last_sweep; leftovers wait for the next sweep.
+SWEEP_BUDGET_SEC = 40 * 60
+# A video whose convert fails or times out this many sweeps in a row is
+# marked seen and skipped. Without this, one hanging video ate the budget of
+# every sweep and the newer uploads behind it never got converted.
+MAX_CONVERT_ATTEMPTS = 3
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
 
 # Deep-visual-capture flag set — same expansion server.py uses for the UI's
@@ -275,21 +284,67 @@ def _record_converted(vault: Vault, sub_id: str, video: dict,
     save_subs(vault, data)
 
 
-def run_sweep(vault: Vault, json_mode: bool = False) -> dict:
+def _record_failure(vault: Vault, sub_id: str, video: dict) -> int:
+    """Count a failed/timed-out convert. Returns the attempt count; at
+    MAX_CONVERT_ATTEMPTS the video is marked seen so later sweeps skip it."""
+    data = load_subs(vault)
+    sub = get_sub(data, sub_id)
+    if sub is None:
+        return 0
+    failures = dict(sub.get("failures") or {})
+    n = int(failures.get(video["id"], 0)) + 1
+    if n >= MAX_CONVERT_ATTEMPTS:
+        failures.pop(video["id"], None)
+        seen = sub.get("seen_ids") or []
+        if video["id"] not in seen:
+            seen.insert(0, video["id"])
+        sub["seen_ids"] = seen[:SEEN_CAP]
+    else:
+        failures[video["id"]] = n
+    sub["failures"] = failures
+    save_subs(vault, data)
+    return n
+
+
+def _clear_failure(vault: Vault, sub_id: str, video_id: str) -> None:
+    data = load_subs(vault)
+    sub = get_sub(data, sub_id)
+    if sub is not None and video_id in (sub.get("failures") or {}):
+        sub["failures"].pop(video_id, None)
+        save_subs(vault, data)
+
+
+def _attempt_note(n: int) -> str:
+    if n >= MAX_CONVERT_ATTEMPTS:
+        return f" — skipped after {n} attempts"
+    return f" (attempt {n} of {MAX_CONVERT_ATTEMPTS})"
+
+
+def run_sweep(vault: Vault, json_mode: bool = False,
+              budget_sec: float = SWEEP_BUDGET_SEC) -> dict:
     """Discover + convert every new upload into the vault's staging.
     Successful conversions are marked seen immediately (a crash mid-sweep
     never reconverts finished ones). Returns a summary; prints progress
     lines + a machine-readable tail for the server job log."""
+    started = time.monotonic()
     findings = discover(vault)
+    failures = {s["id"]: dict(s.get("failures") or {})
+                for s in load_subs(vault)["subscriptions"]}
     converted: list[dict] = []
     errors: list[str] = []
+    deferred: list[str] = []
     auto_pending = False
 
     for f in findings:
         if f.get("error"):
             errors.append(f"{f['sub']}: {f['error']}")
             continue
-        for video in f["new"]:
+        # Previously failing videos go last, so they can't starve new ones.
+        prior = failures.get(f["sub"], {})
+        for video in sorted(f["new"], key=lambda v: prior.get(v["id"], 0)):
+            if time.monotonic() - started + CONVERT_TIMEOUT_SEC > budget_sec:
+                deferred.append(video["id"])
+                continue
             cmd = [sys.executable, "-u", str(CONVERT), video["url"],
                    "--out", str(vault.output)]
             if f.get("frames"):
@@ -298,15 +353,21 @@ def run_sweep(vault: Vault, json_mode: bool = False) -> dict:
             try:
                 proc = subprocess.run(cmd, capture_output=True, text=True,
                                       encoding="utf-8", errors="replace",
-                                      timeout=900, cwd=str(PROJECT_DIR),
+                                      timeout=CONVERT_TIMEOUT_SEC,
+                                      cwd=str(PROJECT_DIR),
                                       creationflags=NO_WINDOW)
             except subprocess.TimeoutExpired:
-                errors.append(f"{video['id']}: convert timed out")
+                n = _record_failure(vault, f["sub"], video)
+                errors.append(f"{video['id']}: convert timed out"
+                              + _attempt_note(n))
                 continue
             if proc.returncode != 0:
+                n = _record_failure(vault, f["sub"], video)
                 tail = (proc.stderr or proc.stdout or "").strip()[-300:]
-                errors.append(f"{video['id']}: convert exit {proc.returncode} ({tail})")
+                errors.append(f"{video['id']}: convert exit {proc.returncode} ({tail})"
+                              + _attempt_note(n))
                 continue
+            _clear_failure(vault, f["sub"], video["id"])
             _record_converted(vault, f["sub"], video,
                               bool(f.get("auto_ingest")))
             converted.append({"id": video["id"], "title": video["title"],
@@ -324,6 +385,7 @@ def run_sweep(vault: Vault, json_mode: bool = False) -> dict:
         "checked": len(findings),
         "converted": converted,
         "errors": errors,
+        "deferred": deferred,
         "auto_ingest_requested": auto_pending,
     }
     if auto_pending:
@@ -332,6 +394,9 @@ def run_sweep(vault: Vault, json_mode: bool = False) -> dict:
         print("AUTO_INGEST_REQUESTED")
     print(f"[watcher] sweep done: {len(converted)} new video(s) converted, "
           f"{len(errors)} error(s)")
+    if deferred:
+        print(f"[watcher] {len(deferred)} video(s) left for the next sweep "
+              f"(time budget reached)")
     if json_mode:
         print(json.dumps(summary))
     return summary
